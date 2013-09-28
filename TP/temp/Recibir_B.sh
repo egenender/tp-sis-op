@@ -2,6 +2,14 @@
 #~ Se dispara automáticamente o a través del Start_D
 #~ Se detiene a través del Stop_D
 
+# VARIABLES DE ENTORNO QUE DEBEN ESTAR SETEADAS
+MAEDIR="MAESTROS"
+ARRIDIR="ARRIBOS"
+ACEPDIR="ACEPTADOS"
+RECHDIR="RECHAZADOS"
+REPODIR="INVITADOS"
+
+
 function esDeSala(){
 
 	#~ ID de la SALA-CORREO-xxx
@@ -13,23 +21,31 @@ function esDeSala(){
 	
 	#~ CUMPLEFORMATO=`echo $filename | grep ".*[^\-]\-.*[^\-]@.*[^\-]-.*[^\- ]$" | wc -l`
 	
-	if [$filename =~ "^[0-9]\+\-.*[^\-]@.*[^\-]-.*[^\- ]$"]
+	#~ if [[ $filename =~ "^[0-9]\+\-.*[^\-]@.*[^\-]-.*[^\- ]$" ]]
+	if [ `echo "$filename" | grep "[0-9]\+\-.*[^-]@.*[^-]\-.*[^- ]$" | wc -l` == 1 ]
 	then
 		
 		#~ sed s/"\(.*[^\-]\)\-.*[^\-]@.*[^\-]-.*[^\- ]$"/"\1"
 		SALA=`echo "$filename"|cut -d- -f 1`
 
-		if [`expr $SALA % 2` == 0]
+		if [ `expr $SALA % 2` == 0 ]
 		then 
 			
 			CORREO=`echo "$filename"|cut -d- -f 2`
-			if [`grep "$SALA;.*[^;];.*[^;];.*[^;];.*[^;];$CORREO\$" $MAEDIR/salas.mae | wc -l` >= 1]
+			
+			if [ `grep "$SALA;.*[^;];.*[^;];.*[^;];.*[^;];$CORREO$" $MAEDIR/salas.mae | wc -l` -ge 1 ]
 			then
 				echo "1"
+			else
+				echo "0"
 			fi
+		else
+			echo "0"	
 		fi
+	else
+		echo "0"
 	fi
-	echo "0"
+
 }
 
 function esDeProduccion(){
@@ -44,34 +60,40 @@ function esDeProduccion(){
 	filename=$(basename "$1")
 	
 	#~ CUMPLEFORMATO=`echo $filename | grep ".*[^\-]\-.*[^\-]@.*[^\-]-.*[^\- ]$" | wc -l`
-	
-	if [$filename =~ "^[0-9]\+\-.*[^\-]@.*[^\-]-.*[^\- ]$"]
+	if [ `echo "$filename" | grep "[0-9]\+\-.*[^-]@.*[^-]\-.*[^- ]$" | wc -l` == 1 ]
+	#~ if [[ $filename =~ ".*[^-]\-.*[^-]@.*[^-]-.*[^- ]$" ]]
 	then
 		
 		#~ sed s/"\(.*[^\-]\)\-.*[^\-]@.*[^\-]-.*[^\- ]$"/"\1"
 		OBRA=`echo "$filename"|cut -d- -f 1`
 
-		if [`expr $OBRA % 2` != 0]
+		if [ `expr $OBRA % 2` != 0 ]
 		then 
 			
 			CORREO=`echo "$filename"|cut -d- -f 2`
-			if [(`grep "$OBRA;.*[^;];$CORREO;.*[^;]$" $MAEDIR/obras.mae | wc -l` >= 1) -o (`grep "$OBRA;.*[^;];.*[^;];$CORREO\$" $MAEDIR/obras.mae | wc -l` >= 1)]
+			if [ `grep "$OBRA;.*[^;];$CORREO;.*[^;]$" $MAEDIR/obras.mae | wc -l` -ge 1 ] || [ `grep "$OBRA;.*[^;];.*[^;];$CORREO$" $MAEDIR/obras.mae | wc -l` -ge 1 ]
 			then
 				echo "1"
+			else
+				echo "0"
 			fi
+		else
+			echo "0"
 		fi
+	else
+		echo "0"
 	fi
-	echo "0"
+
 	
 	
 }
 
 function esDeReservas(){
 	
-	ESDEPRODUCCION= $(esDeProduccion $1)
-	ESDESALA= $(esDeSala $1)
+	ESDEPRODUCCION=$(esDeProduccion $1)
+	ESDESALA=$(esDeSala $1)
 	
-	if [$ESDEPRODUCCION != 1 -a $ESDESALA != 1]
+	if [ $ESDEPRODUCCION != 1 -a $ESDESALA != 1 ]
 	then
 		echo "0"
 	else
@@ -86,13 +108,16 @@ function esDeInvitados(){
 	#~ El nombre de los archivos de invitados tienen el siguiente formato: Referencia Interna del Solicitante.inv
 	#~ La referencia Interna del solicitante es cualquier combinación de caracteres sin guiones ni espacios
 	#~ Luego de la referencia debe seguir obligatoriamente “.inv” de lo contrario el archivo no será identificado como archivo de invitados
-	
+
 	filename=$(basename "$1")
-	if [$filename =~ ".*[^\- ].inv$"]
+	
+	if [ `echo "$filename" | grep ".*[^- ].inv$" | wc -l` != 1 ]
 	then
+		echo "0"
+	else
 		echo "1"
 	fi
-	echo "0"
+
 	
 }
 
@@ -114,7 +139,7 @@ do
 	#~ 2. Chequear si hay archivos en el directorio $ARRIDIR. 
 	NUMARCHIVOS=`ls $ARRIDIR | wc -l`
 	
-	if [$NUMARCHIVOS != 0]
+	if [ $NUMARCHIVOS != 0 ]
 	then
 	
 		#~ Si existen archivos, por cada archivo que se detecta
@@ -122,25 +147,26 @@ do
 		do
 			#~ 2.1. Verificar que el archivo sea un archivo común, de texto. Los archivos de cualquier otro tipo, se rechazan. 
 			ISTEXTFILE=`file $f | grep "text"| wc -l`
-			if [$ISTEXTFILE != 0]
+			if [ $ISTEXTFILE != 0 ]
 			then
 				#~ 2.2. Verificar que el formato del nombre del archivo sea correcto, los archivos con nombres que no se correspondan con el formato esperado, se rechazan.
 				#~ 2.3. Si es de reservas mover el archivo aceptado a $ACEPDIR empleando la función  Mover_B y grabar en el log el mensaje de éxito
-				ESDERESERVAS=$(esDeReservas $f)
-				if [$ESDERESERVAS == 1]
+				ESDERESERVAS=`esDeReservas $f`
+				echo "$ESDERESERVAS"
+				if [ "$ESDERESERVAS" == 1 ]
 				then
-					Mover_B $ARRIDIR $ACEPDIR "Recibir_B"
+					./Mover_B.sh $f $ACEPDIR "Recibir_B"
 					
 					#~ Probar cuando este implementado
 					#~ Grabar_L "Recibir_B" "Exito al procesar el archivo  de reservas $f"
 					
 					echo "Exito al procesar el archivo de reservas $f"
 				fi
-				ESDEINVITADOS=$(esDeInvitados $f)
+				ESDEINVITADOS=`esDeInvitados $f`
 				#~ 2.4. Si es de invitados mover el archivo aceptado a $REPODIR empleando la función  Mover_B y grabar en el log el mensaje de éxito
-				if [$ESDEINVITADOS == 1]
+				if [ "$ESDEINVITADOS" == 1 ]
 				then
-					Mover_B $ARRIDIR $REPODIR "Recibir_B"
+					./Mover_B.sh $f $REPODIR "Recibir_B"
 					
 					#~ Probar cuando este implementado
 					#~ Grabar_L "Recibir_B" "Exito al procesar el archivo  de invitados $f"
@@ -149,36 +175,25 @@ do
 				fi
 				
 				#~ 2.5. Si el nombre del archivo no es válido mover el archivo rechazado a $RECHDIR empleando la función Mover_B, grabar en el log el mensaje de rechazo aclarando cual es el motivo:
-				if [$ESDERESERVAS != 1 -a $ESDEINVITADOS != 1]
+				if [ "$ESDERESERVAS" != 1 -a "$ESDEINVITADOS" != 1 ]
 				then
-					Mover_B $ACEPDIR $RECHDIR "Recibir_B"
+					./Mover_B.sh $f $RECHDIR "Recibir_B"
 					
 					#~ Probar cuando este implementado
 					#~ Grabar_L "Recibir_B" "El archivo $f no es valido"
 					
-					echo "El archivo $f no es valido"
-				
-				fi
-				
-				else
-					#Rechazar por formato invalido
-				
-					Mover_B $ACEPDIR $RECHDIR "Recibir_B"
-					
-					#~ Probar cuando este implementado
-					#~ Grabar_L "Recibir_B" "El archivo $f no es valido"
-					
-					echo "El archivo $f no es valido"
+					echo "El archivo $f no es valido porque no es ni de reservas ni de invitados"
+
 				fi
 				
 			else
 				#Rechazar por Tipo de archivo invalido
-				Mover_B $ACEPDIR $RECHDIR "Recibir_B"
+				./Mover_B.sh $f $RECHDIR "Recibir_B"
 					
 				#~ Probar cuando este implementado
 				#~ Grabar_L "Recibir_B" "El archivo $f no es valido"
 				
-				echo "El archivo $f no es valido"
+				echo "El archivo $f no es de un tipo valido"
 			
 			fi
 	
@@ -189,7 +204,7 @@ do
 		#~ 4. Si existen archivos en $ACEPDIR
 		NUMARCHIVOS=`ls $ACEPDIR | wc -l`
 		
-		if [$NUMARCHIVOS != 0]
+		if [ $NUMARCHIVOS != 0 ]
 		then
 			#~ 4.1. Invocar al Comando Reservar_B siempre que éste no se esté ejecutando.
 			#~ Si arranca correctamente se debe mostrar por pantalla el process id de Reservar_B
@@ -203,8 +218,8 @@ do
 			echo "Se corre Reservar_B y toda la gilada"
 		fi
 		#~ 5. Dormir x minutos y Volver al punto 1
-		sleep 1m
 	fi
+	sleep 1m
 	
 
 done
