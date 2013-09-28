@@ -152,7 +152,6 @@ do
 				#~ 2.2. Verificar que el formato del nombre del archivo sea correcto, los archivos con nombres que no se correspondan con el formato esperado, se rechazan.
 				#~ 2.3. Si es de reservas mover el archivo aceptado a $ACEPDIR empleando la función  Mover_B y grabar en el log el mensaje de éxito
 				ESDERESERVAS=`esDeReservas $f`
-				echo "$ESDERESERVAS"
 				if [ "$ESDERESERVAS" == 1 ]
 				then
 					./Mover_B.sh $f $ACEPDIR "Recibir_B"
