@@ -22,7 +22,7 @@ function esDeSala(){
 	#~ CUMPLEFORMATO=`echo $filename | grep ".*[^\-]\-.*[^\-]@.*[^\-]-.*[^\- ]$" | wc -l`
 	
 	#~ if [[ $filename =~ "^[0-9]\+\-.*[^\-]@.*[^\-]-.*[^\- ]$" ]]
-	if [ `echo "$filename" | grep "[0-9]\+\-.*[^-]@.*[^-]\-.*[^- ]$" | wc -l` == 1 ]
+	if [ `echo "$filename" | grep "[0-9]\+\-[^-]*@[^-]*\-[^- ]*$" | wc -l` == 1 ]
 	then
 		
 		#~ sed s/"\(.*[^\-]\)\-.*[^\-]@.*[^\-]-.*[^\- ]$"/"\1"
@@ -33,7 +33,7 @@ function esDeSala(){
 			
 			CORREO=`echo "$filename"|cut -d- -f 2`
 			
-			if [ `grep "$SALA;.*[^;];.*[^;];.*[^;];.*[^;];$CORREO$" $MAEDIR/salas.mae | wc -l` -ge 1 ]
+			if [ `grep "$SALA;[^;]*;[^;]*;[^;]*;[^;]*;$CORREO$" $MAEDIR/salas.mae | wc -l` -ge 1 ]
 			then
 				echo "1"
 			else
@@ -60,7 +60,7 @@ function esDeProduccion(){
 	filename=$(basename "$1")
 	
 	#~ CUMPLEFORMATO=`echo $filename | grep ".*[^\-]\-.*[^\-]@.*[^\-]-.*[^\- ]$" | wc -l`
-	if [ `echo "$filename" | grep "[0-9]\+\-.*[^-]@.*[^-]\-.*[^- ]$" | wc -l` == 1 ]
+	if [ `echo "$filename" | grep "[0-9]\+\-[^-]*@[^-]*\-[^- ]*$" | wc -l` == 1 ]
 	#~ if [[ $filename =~ ".*[^-]\-.*[^-]@.*[^-]-.*[^- ]$" ]]
 	then
 		
@@ -71,7 +71,7 @@ function esDeProduccion(){
 		then 
 			
 			CORREO=`echo "$filename"|cut -d- -f 2`
-			if [ `grep "$OBRA;.*[^;];$CORREO;.*[^;]$" $MAEDIR/obras.mae | wc -l` -ge 1 ] || [ `grep "$OBRA;.*[^;];.*[^;];$CORREO$" $MAEDIR/obras.mae | wc -l` -ge 1 ]
+			if [ `grep "$OBRA;[^;]*;$CORREO;[^;]*$" $MAEDIR/obras.mae | wc -l` -ge 1 ] || [ `grep "$OBRA;[^;]*;[^;]*;$CORREO$" $MAEDIR/obras.mae | wc -l` -ge 1 ]
 			then
 				echo "1"
 			else
@@ -111,7 +111,7 @@ function esDeInvitados(){
 
 	filename=$(basename "$1")
 	
-	if [ `echo "$filename" | grep ".*[^- ].inv$" | wc -l` != 1 ]
+	if [ `echo "$filename" | grep "[^- ]*.inv$" | wc -l` != 1 ]
 	then
 		echo "0"
 	else
@@ -132,9 +132,9 @@ do
 	CICLOS_RECIBIR_B=`expr $CICLOS_RECIBIR_B + 1`
 	
 	#~ Probar cuando este implementado
-	#~ Grabar_L "Recibir_B" "Ciclo Nro $CICLOS_RECIBIR_B"
+	./Grabar_L.sh "Recibir_B" "Ciclo Nro $CICLOS_RECIBIR_B"
 
-	echo "Recibir_B Ciclo Nro $CICLOS_RECIBIR_B"
+	#~ echo "Recibir_B Ciclo Nro $CICLOS_RECIBIR_B"
 	
 	#~ 2. Chequear si hay archivos en el directorio $ARRIDIR. 
 	NUMARCHIVOS=`ls $ARRIDIR | wc -l`
@@ -157,9 +157,9 @@ do
 					./Mover_B.sh $f $ACEPDIR "Recibir_B"
 					
 					#~ Probar cuando este implementado
-					#~ Grabar_L "Recibir_B" "Exito al procesar el archivo  de reservas $f"
+					./Grabar_L.sh "Recibir_B" "Exito al procesar el archivo  de reservas $f"
 					
-					echo "Exito al procesar el archivo de reservas $f"
+					#~ echo "Exito al procesar el archivo de reservas $f"
 				fi
 				ESDEINVITADOS=`esDeInvitados $f`
 				#~ 2.4. Si es de invitados mover el archivo aceptado a $REPODIR empleando la función  Mover_B y grabar en el log el mensaje de éxito
@@ -168,9 +168,9 @@ do
 					./Mover_B.sh $f $REPODIR "Recibir_B"
 					
 					#~ Probar cuando este implementado
-					#~ Grabar_L "Recibir_B" "Exito al procesar el archivo  de invitados $f"
+					./Grabar_L.sh "Recibir_B" "Exito al procesar el archivo  de invitados $f"
 				
-					echo "Exito al procesar el archivo de invitados $f"
+					#~ echo "Exito al procesar el archivo de invitados $f"
 				fi
 				
 				#~ 2.5. Si el nombre del archivo no es válido mover el archivo rechazado a $RECHDIR empleando la función Mover_B, grabar en el log el mensaje de rechazo aclarando cual es el motivo:
@@ -179,9 +179,9 @@ do
 					./Mover_B.sh $f $RECHDIR "Recibir_B"
 					
 					#~ Probar cuando este implementado
-					#~ Grabar_L "Recibir_B" "El archivo $f no es valido"
+					./Grabar_L.sh "Recibir_B" "El archivo $f no es valido"
 					
-					echo "El archivo $f no es valido porque no es ni de reservas ni de invitados"
+					#~ echo "El archivo $f no es valido porque no es ni de reservas ni de invitados"
 
 				fi
 				
@@ -190,9 +190,9 @@ do
 				./Mover_B.sh $f $RECHDIR "Recibir_B"
 					
 				#~ Probar cuando este implementado
-				#~ Grabar_L "Recibir_B" "El archivo $f no es valido"
+				./Grabar_L.sh "Recibir_B" "El archivo $f no es valido"
 				
-				echo "El archivo $f no es de un tipo valido"
+				#~ echo "El archivo $f no es de un tipo valido"
 			
 			fi
 	
