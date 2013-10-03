@@ -7,7 +7,7 @@
 
 function verificarRecorte(){
 	CANT_LINEAS=`cat $RUTA_LOG | wc -l`
-	if [ $CANT_LINEAS -gt $LOGSIZE ]
+	if [ "$CANT_LINEAS" -gt "$LOGSIZE" ]
 	then
 		#Me quedo con las ultimas 50 lineas del log y agrego que recorto
 		TEMP_LOG=`echo "$RUTA_LOG".temp`
