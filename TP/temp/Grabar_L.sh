@@ -39,11 +39,11 @@ if [ $# == 3 ]
 then
 	TIPO_MSJ=$2
 	MENSAJE=$3
-	MSJ_COMPLETO=`date`" "`echo ${TIPO_MSJ^^} - $MENSAJE`
+	MSJ_COMPLETO=`date`" - "`echo ${TIPO_MSJ^^} - $MENSAJE`
 else	
 	TIPO_MSJ=""
 	MENSAJE=$2
-	MSJ_COMPLETO=`date`" "`echo $MENSAJE`
+	MSJ_COMPLETO=`date`" - "`echo $MENSAJE`
 fi
 
 if [ $CALL_COMANDO == "Instalar_B" ]
