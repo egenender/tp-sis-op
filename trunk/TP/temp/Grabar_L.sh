@@ -20,8 +20,8 @@ function verificarRecorte(){
 }
 
 function loggear_install(){
-	$RUTA_LOG=`echo "$CONFDIR"Instalar_B.log`
-	echo $MSJ_COMPLETO >> $RUTA_LOG 
+	
+	echo $MSJ_COMPLETO >> "$CONFDIR"Instalar_B.log
 }
 
 #Verifico que no me hayan pasado una mala cantidad de parametros
@@ -39,11 +39,11 @@ if [ $# == 3 ]
 then
 	TIPO_MSJ=$2
 	MENSAJE=$3
-	MSJ_COMPLETO=`echo date ${TIPO_MSJ^^} - $MENSAJE`
+	MSJ_COMPLETO=`date`" "`echo ${TIPO_MSJ^^} - $MENSAJE`
 else	
 	TIPO_MSJ=""
 	MENSAJE=$2
-	MSJ_COMPLETO=`echo date $MENSAJE`
+	MSJ_COMPLETO=`date`" "`echo $MENSAJE`
 fi
 
 if [ $CALL_COMANDO == "Instalar_B" ]
