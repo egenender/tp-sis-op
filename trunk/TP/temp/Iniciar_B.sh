@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # archivo de configuracion, es una ruta fija segun el enunciado
-CONF="../conf/.conf" # TODO: revisar este path
+CONF="../conf/Instalar_TP.conf" # TODO: revisar este path
 
 function verificarInstalacion {
 	#TODO
