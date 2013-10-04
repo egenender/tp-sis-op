@@ -5,7 +5,7 @@ CONF="../conf/.conf" # TODO: revisar este path
 
 function verificarInstalacion {
 	#TODO
-	echo 0
+	return 0
 }
 
 # Verifica que las variables de ambiente esten vacias.
@@ -59,41 +59,31 @@ function setearVariables {
 	if [ -f $CONF ] ; then
 		# formato por linea: VARIABLE=VALOR=FECHA
 		# TODO: CREO que por ejemplo CONFDIR vale $GRUPO/conf, o sea, incluye el path de grupo
-		GRUPO=`grep "^GRUPO=" $CONF | sed "s/^GRUPO=\([^=]*\)=.*/\1/"`
-		CONFDIR=`grep "^CONFDIR=" $CONF | sed "s/^CONFDIR=\([^=]*\)=.*/\1/"`
-		ARRIDIR=`grep "^ARRIDIR=" $CONF | sed "s/^ARRIDIR=\([^=]*\)=.*/\1/"`
-		RECHDIR=`grep "^RECHDIR=" $CONF | sed "s/^RECHDIR=\([^=]*\)=.*/\1/"`
-		BINDIR=`grep "^BINDIR=" $CONF | sed "s/^BINDIR=\([^=]*\)=.*/\1/"`
-		MAEDIR=`grep "^MAEDIR=" $CONF | sed "s/^MAEDIR=\([^=]*\)=.*/\1/"`
-		REPODIR=`grep "^REPODIR=" $CONF | sed "s/^REPODIR=\([^=]*\)=.*/\1/"`
-		LOGDIR=`grep "^LOGDIR=" $CONF | sed "s/^LOGDIR=\([^=]*\)=.*/\1/"`
-		LOGEXT=`grep "^LOGEXT=" $CONF | sed "s/^LOGEXT=\([^=]*\)=.*/\1/"`
-		LOGSIZE=`grep "^LOGSIZE=" $CONF | sed "s/^LOGSIZE=\([^=]*\)=.*/\1/"`	
-		export GRUPO
-		export CONFDIR
-		export ARRIDIR
-		export RECHDIR
-		export BINDIR
-		export MAEDIR
-		export REPODIR
-		export LOGDIR
-		export LOGEXT
-		export LOGSIZE
+		export GRUPO=`grep "^GRUPO=" $CONF | sed "s/^GRUPO=\([^=]*\)=.*$/\1/"`
+		export CONFDIR=`grep "^CONFDIR=" $CONF | sed "s/^CONFDIR=\([^=]*\)=.*$/\1/"`
+		export ARRIDIR=`grep "^ARRIDIR=" $CONF | sed "s/^ARRIDIR=\([^=]*\)=.*$/\1/"`
+		export RECHDIR=`grep "^RECHDIR=" $CONF | sed "s/^RECHDIR=\([^=]*\)=.*$/\1/"`
+		export BINDIR=`grep "^BINDIR=" $CONF | sed "s/^BINDIR=\([^=]*\)=.*$/\1/"`
+		export MAEDIR=`grep "^MAEDIR=" $CONF | sed "s/^MAEDIR=\([^=]*\)=.*$/\1/"`
+		export REPODIR=`grep "^REPODIR=" $CONF | sed "s/^REPODIR=\([^=]*\)=.*$/\1/"`
+		export LOGDIR=`grep "^LOGDIR=" $CONF | sed "s/^LOGDIR=\([^=]*\)=.*$/\1/"`
+		export LOGEXT=`grep "^LOGEXT=" $CONF | sed "s/^LOGEXT=\([^=]*\)=.*$/\1/"`
+		export LOGSIZE=`grep "^LOGSIZE=" $CONF | sed "s/^LOGSIZE=\([^=]*\)=.*$/\1/"`	
 		#Ver si falta alguno mas
 	else
 		return 1
 	fi
 	
-	#PATH=$PATH:$GRUPO:$BINDIR"/":$REPODIR"/"   #TODO: no se muy bien como se pone el PATH
-	export PATH
+	#export PATH=$PATH:$GRUPO:$BINDIR"/":$REPODIR"/"   #TODO: no se muy bien como se pone el PATH
 	return 0
 }
 
 
 # Otorga permisos de ejecucion a los archivos ejecutables
 function otorgarPermisos {
-	# TODO:
-	#chmod +x .........../Recibir_B.sh
+	# TODO: ver donde se encontraria Recibir_B.sh respecto de Iniciar_B.sh. Si estan en mismo directorio, es así:
+	# chmod +x Recibir_B.sh
+	return 0
 }
 
 # Verifica si ya se esta ejecutando Recibir_B.sh
@@ -108,34 +98,36 @@ function ejecutandoRecibirB(){
 
 function explicarStop {
 	#TODO: Aca iria la explicacion de como funciona el STOP_D
+	echo "explicacion stop"
 }
 
 function explicarStart {
 	#TODO: Aca iria la explicacion de como funciona el START_D
+	echo "explicacion start"
 }
 
 function imprimirInformacion {
 	echo "TP SO7508 Segundo Cuatrimestre 2013. Tema B Copyright © Grupo 02"
-	echo "Librería del Sistema: $CONFDIR. Archivos:"
-	ls $CONFDIR/
-	echo "Ejecutables: $BINDIR. Archivos:"
-	ls $BINDIR/
-	echo "Archivos maestros: $MAEDIR"
-	ls $MAEDIR/
+	echo "Librería del Sistema:                      $CONFDIR."
+	#ls $CONFDIR/
+	echo "Ejecutables:                               $BINDIR."
+	#ls $BINDIR/
+	echo "Archivos maestros:                         $MAEDIR"
+	#ls $MAEDIR/
 	echo "Directorio de arribo de archivos externos: $ARRIDIR"
-	echo "Archivos externos aceptados: $ACEPDIR"
-	echo "Archivos externos rechazados: $RECHDIR"
-	echo "Reportes de salida: $REPODIR"
-	echo "Archivos procesados: $PROCDIR"
-	echo "Logs de auditoria del Sistema: $LOGDIR/Iniciar_B.$LOGEXT"
-	echo "Estado del Sistema: INICIALIZADO" # TODO: esto sería una variable?
-	echo "Demonio corriendo bajo el no.: $PIDRECIBIRB"
+	echo "Archivos externos aceptados:               $ACEPDIR"
+	echo "Archivos externos rechazados:              $RECHDIR"
+	echo "Reportes de salida:                        $REPODIR"
+	echo "Archivos procesados:                       $PROCDIR"
+	echo "Logs de auditoria del Sistema:             $LOGDIR/Iniciar_B.$LOGEXT"
+	echo "Estado del Sistema:                        INICIALIZADO" # TODO: esto sería una variable?
+	echo "Demonio corriendo bajo el no.:             $PIDRECIBIRB"
 }
 
 function solicitarInicioRecibir {
-	echo -n "Desea efectuar la activación de Recibir_B?” Si – No"
+	echo -n "Desea efectuar la activación de Recibir_B?” Si – No "
 	RESPUESTA=""
-	while [[ $RESPUESTA != "Si" ] || [ $RESPUESTA != "No" ]] ; do
+	while [ "$RESPUESTA" != "Si" -a "$RESPUESTA" != "No" ] ; do
 		read RESPUESTA
 	done
 	
@@ -198,7 +190,7 @@ if [ $? -eq 0 ] ; then
 	fi
 	explicarStop
 else
-	explicacionStart
+	explicarStart
 	# TODO: grabar en log que el usuario no quiso iniciarlo
 fi
 
