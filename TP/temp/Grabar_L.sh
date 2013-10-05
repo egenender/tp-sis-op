@@ -21,7 +21,7 @@ function verificarRecorte(){
 
 function loggear_install(){
 	
-	echo $MSJ_COMPLETO >> "$CONFDIR"Instalar_B.log
+	echo $MSJ_COMPLETO >> "$CONFDIR"Instalar_TP.log
 }
 
 #Verifico que no me hayan pasado una mala cantidad de parametros
@@ -46,7 +46,7 @@ else
 	MSJ_COMPLETO=`date`" - "`echo $MENSAJE`
 fi
 
-if [ $CALL_COMANDO == "Instalar_B" ]
+if [ $CALL_COMANDO == "Instalar_TP" ]
 then
 	loggear_install
 	exit 0
