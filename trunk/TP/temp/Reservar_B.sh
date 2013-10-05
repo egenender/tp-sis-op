@@ -54,9 +54,6 @@ function procesarArchivo(){
 	
 }
 
-ACEPDIR="TDA"
-BINDIR="TDA"
-
 #inicializarReservar
 for archivo in `ls $ACEPDIR/`
 do
