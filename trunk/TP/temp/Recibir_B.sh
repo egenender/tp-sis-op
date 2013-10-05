@@ -1,13 +1,15 @@
-#/bin/bash
+#!/bin/bash
+
 #~ Se dispara automáticamente o a través del Start_D
 #~ Se detiene a través del Stop_D
 
-# VARIABLES DE ENTORNO QUE DEBEN ESTAR SETEADAS
+# VARIABLES DE ENTORNO QUE DEBEN ESTAR SETEADAS POR Iniciar_B (Sacar cuando esto ya este)
 MAEDIR="MAESTROS"
 ARRIDIR="ARRIBOS"
 ACEPDIR="ACEPTADOS"
 RECHDIR="RECHAZADOS"
 REPODIR="INVITADOS"
+
 
 
 function esDeSala(){
@@ -19,13 +21,9 @@ function esDeSala(){
 	
 	filename=$(basename "$1")
 	
-	#~ CUMPLEFORMATO=`echo $filename | grep ".*[^\-]\-.*[^\-]@.*[^\-]-.*[^\- ]$" | wc -l`
-	
-	#~ if [[ $filename =~ "^[0-9]\+\-.*[^\-]@.*[^\-]-.*[^\- ]$" ]]
 	if [ `echo "$filename" | grep "[0-9]\+\-[^-]*@[^-]*\-[^- ]*$" | wc -l` == 1 ]
 	then
-		
-		#~ sed s/"\(.*[^\-]\)\-.*[^\-]@.*[^\-]-.*[^\- ]$"/"\1"
+
 		SALA=`echo "$filename"|cut -d- -f 1`
 
 		if [ `expr $SALA % 2` == 0 ]
@@ -37,6 +35,9 @@ function esDeSala(){
 			then
 				echo "1"
 			else
+				
+				$BINDIR/Grabar_L.sh "Recibir_B" "$f: no existe combinacion SALA-CORREO en salas.mae"
+			
 				echo "0"
 			fi
 		else
@@ -59,12 +60,9 @@ function esDeProduccion(){
 		
 	filename=$(basename "$1")
 	
-	#~ CUMPLEFORMATO=`echo $filename | grep ".*[^\-]\-.*[^\-]@.*[^\-]-.*[^\- ]$" | wc -l`
 	if [ `echo "$filename" | grep "[0-9]\+\-[^-]*@[^-]*\-[^- ]*$" | wc -l` == 1 ]
-	#~ if [[ $filename =~ ".*[^-]\-.*[^-]@.*[^-]-.*[^- ]$" ]]
 	then
-		
-		#~ sed s/"\(.*[^\-]\)\-.*[^\-]@.*[^\-]-.*[^\- ]$"/"\1"
+
 		OBRA=`echo "$filename"|cut -d- -f 1`
 
 		if [ `expr $OBRA % 2` != 0 ]
@@ -75,6 +73,9 @@ function esDeProduccion(){
 			then
 				echo "1"
 			else
+				
+				$BINDIR/Grabar_L.sh "Recibir_B" "$f: no existe combinacion OBRA-CORREO en obras.mae"
+				
 				echo "0"
 			fi
 		else
@@ -121,18 +122,16 @@ function esDeInvitados(){
 	
 }
 
-#~ 1. Grabar en el Log el nro de ciclo: Ej: “Ciclo Nro 1”. Indicar en las hipótesis como realizan la contabilidad del ciclo.
-#~ idea: variable de entorno
-
 
 CICLOS_RECIBIR_B=0
 #~ demonio
 while [ 1 ]
 do
+	#~ 1. Grabar en el Log el nro de ciclo: Ej: “Ciclo Nro 1”. Indicar en las hipótesis como realizan la contabilidad del ciclo.
 	CICLOS_RECIBIR_B=`expr $CICLOS_RECIBIR_B + 1`
 	
 	#~ Probar cuando este implementado
-	./Grabar_L.sh "Recibir_B" "Ciclo Nro $CICLOS_RECIBIR_B"
+	$BINDIR/Grabar_L.sh "Recibir_B" "Ciclo Nro $CICLOS_RECIBIR_B"
 
 	#~ echo "Recibir_B Ciclo Nro $CICLOS_RECIBIR_B"
 	
@@ -154,45 +153,38 @@ do
 				ESDERESERVAS=`esDeReservas $f`
 				if [ "$ESDERESERVAS" == 1 ]
 				then
-					./Mover_B.sh $f $ACEPDIR "Recibir_B"
-					
-					#~ Probar cuando este implementado
-					./Grabar_L.sh "Recibir_B" "Exito al procesar el archivo  de reservas $f"
-					
-					#~ echo "Exito al procesar el archivo de reservas $f"
+
+					$BINDIR/Mover_B.sh $f $ACEPDIR "Recibir_B"
+
+					$BINDIR/Grabar_L.sh "Recibir_B" "Exito al procesar el archivo  de reservas $f"
+
 				fi
 				ESDEINVITADOS=`esDeInvitados $f`
 				#~ 2.4. Si es de invitados mover el archivo aceptado a $REPODIR empleando la función  Mover_B y grabar en el log el mensaje de éxito
 				if [ "$ESDEINVITADOS" == 1 ]
 				then
-					./Mover_B.sh $f $REPODIR "Recibir_B"
 					
-					#~ Probar cuando este implementado
-					./Grabar_L.sh "Recibir_B" "Exito al procesar el archivo  de invitados $f"
+					$BINDIR/Mover_B.sh $f $REPODIR "Recibir_B"
+					
+					$BINDIR/Grabar_L.sh "Recibir_B" "Exito al procesar el archivo  de invitados $f"
 				
-					#~ echo "Exito al procesar el archivo de invitados $f"
 				fi
 				
 				#~ 2.5. Si el nombre del archivo no es válido mover el archivo rechazado a $RECHDIR empleando la función Mover_B, grabar en el log el mensaje de rechazo aclarando cual es el motivo:
 				if [ "$ESDERESERVAS" != 1 -a "$ESDEINVITADOS" != 1 ]
 				then
-					./Mover_B.sh $f $RECHDIR "Recibir_B"
+				
+					$BINDIR/Mover_B.sh $f $RECHDIR "Recibir_B"
 					
-					#~ Probar cuando este implementado
-					./Grabar_L.sh "Recibir_B" "El archivo $f no es valido"
-					
-					#~ echo "El archivo $f no es valido porque no es ni de reservas ni de invitados"
+					$BINDIR/Grabar_L.sh "Recibir_B" "$f: archivo no es ni de reservas ni de invitados"
 
 				fi
 				
 			else
-				#Rechazar por Tipo de archivo invalido
-				./Mover_B.sh $f $RECHDIR "Recibir_B"
+
+				$BINDIR/Mover_B.sh $f $RECHDIR "Recibir_B"
 					
-				#~ Probar cuando este implementado
-				./Grabar_L.sh "Recibir_B" "El archivo $f no es valido"
-				
-				#~ echo "El archivo $f no es de un tipo valido"
+				$BINDIR/Grabar_L.sh "Recibir_B" "$f: tipo de archivo invalido "
 			
 			fi
 	
@@ -206,18 +198,26 @@ do
 		if [ $NUMARCHIVOS != 0 ]
 		then
 			#~ 4.1. Invocar al Comando Reservar_B siempre que éste no se esté ejecutando.
-			#~ Si arranca correctamente se debe mostrar por pantalla el process id de Reservar_B
-			#~ Si da algún tipo de error se debe mostrar por pantalla el mensaje explicativo
-			#~  esto me dice si se esta ejecutando, podria ponerlo en un while ps cax | grep command o esperar a la proxima y chau (hipotesis)
-			#~ Para cuando este: correr reservar. pid da el process id y wait espera a que cambie el algo...
-			#~ Reservar_B
-			#~ pid=$!
-			#~ wait $! 
-		
-			echo "Se corre Reservar_B y toda la gilada"
+			
+			PIDRESERVAR=`ps | grep "Reservar_B.sh" | head -1 | awk '{print $1 }'`
+			
+			if [ -z "$PIDRESERVAR" ]
+			then
+			#~ No se esta ejecutando, lo ejecuto
+				#~ Si arranca correctamente se debe mostrar por pantalla el process id de Reservar_B
+				#~ Si da algún tipo de error se debe mostrar por pantalla el mensaje explicativo
+				#~ DUDA: POR CUAL PANTALLA SI ESTOY EN EL BACKGROUND??? si queres lo escribo en el log...
+				
+				$BINDIR/Reservar_B.sh &
+				
+			fi
+			
+
 		fi
-		#~ 5. Dormir x minutos y Volver al punto 1
+		
 	fi
+	
+	#~ 5. Dormir x minutos y Volver al punto 1
 	sleep 1m
 	
 
