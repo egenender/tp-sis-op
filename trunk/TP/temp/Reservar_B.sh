@@ -24,73 +24,50 @@ function cumpleFormato(){
 }
 
 function fechaValida(){
-        FECHA=$1
-        DIA=`echo "$FECHA" | cut -d "/" -f 1`
-        MES=`echo "$FECHA" | cut -d "/" -f 2`
-        ANIO=`echo "$FECHA" | cut -d "/" -f 3`
-                     
-        VALIDO_ANIO=`echo $ANIO | grep "^20[0-3][0-9]" | wc -l`
-        
-        if [ $VALIDO_ANIO ==  0 ]
-        then	
-                echo 1
-                return
-        fi
-
-        VALIDO_MES=`echo $MES | grep "^0[0-9]" | wc -l`
-        if [ $VALIDO_MES == 0 ]
-        then
-                VALIDO_MES=`echo $MES | grep "^1[0-2]" | wc -l`
-                if [ $VALIDO_MES == 0 ]
-                then
-                        echo 2
-                        return
-                fi
-        fi
-        
-        VALIDO_DIA=`echo $DIA | grep "^0[1-9]" | wc -l`
-        
-        if [ $VALIDO_DIA == 0 ]
-        then	
-                VALIDO_DIA=`echo $DIA | grep "^1[0-9]" | wc -l`
-                if [ $VALIDO_DIA == 0 ]
-                then
-                        VALIDO_DIA=`echo $DIA | grep "^2[0-8]" | wc -l`
-                        if [ $VALIDO_DIA == 0 ]
-						then
-								if [ $MES != "02" ]
-                                then
-									VALIDO_DIA=`echo $DIA | grep "^29" | wc -l`
-									if [ $VALIDO_DIA == 0 ]
-									then
-											if [ $MES == "01" -o $MES == "03" -o $MES == "05" -o $MES == "07" -o $MES == "08" -o $MES == "10" -o $MES == "12" ]
-											then
-												VALIDO_DIA=`echo $DIA | grep "^3[01]" | wc -l`
-												if [ $VALIDO_DIA == 0 ]
-												then
-													echo 3
-													return
-												fi
-											else
-												VALIDO_DIA=`echo $DIA | grep "^30" | wc -l`
-												if [ $VALIDO_DIA == 0 ]
-												then
-													echo 4
-													return
-												fi
-											fi
-                                    fi
-                                else
-									#Por ahora no acepto años biciestos
-									echo 5
-									return
-                                fi
-                        fi
-                fi      
-        fi
-        
-        echo 0
+	FECHA_RESERVA=`echo $1 | sed 's+^\([^/]*\)/\([^/]*\)/\(.*\)$+\2/\1/\3+'`
+	#SALIDA_DIA=$(date --date="$FECHA_RESERVA")
+	date --date="$FECHA_RESERVA" 2> aux_date.txt > aux_date1.txt
+	
+	VALIDO=`grep "^date:" aux_date.txt | wc -l`
+	
+	rm aux_date.txt aux_date1.txt
+	
+	if [ $VALIDO == 0 ]
+	then
+		echo 0
+	else
+		echo 1
+	fi
 }
+
+function distanciaAFechaValida(){
+	FECHA_RESERVA=`echo $1 | sed 's+^\([^/]*\)/\([^/]*\)/\(.*\)$+\2/\1/\3+'`
+	FECHA_ACTUAL=$(date +%m/%d/%y)
+	
+	DIF_SEG=`expr $(date --date=$FECHA_RESERVA +%s) - $(date --date=$FECHA_ACTUAL +%s)`
+	#Divido por los segundos en un dia:
+    DIAS=`expr $DIF_SEG / 86400`
+    if [ $DIAS -le 0 ]
+	then
+		echo 1
+		return
+	fi
+	
+	if [ $DIAS -eq 1 ]
+	then
+		echo 2
+		return
+	fi
+	
+	if [ $DIAS -gt 30 ]
+	then
+		echo 3
+		return
+	fi
+	
+	echo 0
+}
+
 
 function procesarArchivo(){
         ARCHIVO_ACTUAL= $1
@@ -139,16 +116,22 @@ function procesarArchivo(){
         
 }
 
-FECHITA="29/02/2005"
-
-VALOR=$(fechaValida $FECHITA)
-if [ $VALOR != 0 ] 
+FECHITA="10/10/2013"
+VALIDEZ=$(fechaValida $FECHITA)
+if [ $VALIDEZ != 0 ]
 then
-	echo "Fecha invalida"
-	echo $VALOR
+	echo "Fecha Invalida"
 else
 	echo "Fecha Valida"
+	DIF_VALIDO=$(distanciaAFechaValida $FECHITA)
+	if [ $DIF_VALIDO -eq 0 ]
+	then
+		echo "Distancia Correcta"
+	else
+		echo "Mal dia"
+	fi
 fi
+
 read hola
 inicializarReservar
 for archivo in `ls $ACEPDIR`
