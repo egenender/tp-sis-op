@@ -46,11 +46,11 @@ function distanciaAFechaValida(){
 	
 	DIF_SEG=`expr $(date --date=$FECHA_RESERVA +%s) - $(date --date=$FECHA_ACTUAL +%s)`
 	#Divido por los segundos en un dia:
-    DIAS=`expr $DIF_SEG / 86400`
-    if [ $DIAS -le 0 ]
+  DIAS=`expr $DIF_SEG / 86400`
+  if [ $DIAS -le 0 ]
 	then
-		echo 1
-		return
+    echo 1
+    return
 	fi
 	
 	if [ $DIAS -eq 1 ]
