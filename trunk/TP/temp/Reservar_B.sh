@@ -46,11 +46,11 @@ function distanciaAFechaValida(){
 	
 	DIF_SEG=`expr $(date --date=$FECHA_RESERVA +%s) - $(date --date=$FECHA_ACTUAL +%s)`
 	#Divido por los segundos en un dia:
-  DIAS=`expr $DIF_SEG / 86400`
-  if [ $DIAS -le 0 ]
+    DIAS=`expr $DIF_SEG / 86400`
+    if [ $DIAS -le 0 ]
 	then
-    echo 1
-    return
+		echo 1
+		return
 	fi
 	
 	if [ $DIAS -eq 1 ]
@@ -68,6 +68,30 @@ function distanciaAFechaValida(){
 	echo 0
 }
 
+function horaValida(){
+	HORA_RESERVA=$1
+	
+	FORMAT=`echo $HORA_RESERVA | grep "^[0-9][0-9]:[0-9][0-9]$" | wc -l`
+	if [ $FORMAT == 0 ]
+	then
+		echo 1
+		return
+	fi
+	
+	HH=`echo "$HORA_RESERVA" | cut -d ":" -f 1`
+	MM=`echo "$HORA_RESERVA" | cut -d ":" -f 2`
+	if [ $HH -lt 0 -o $HH -gt 23 ]
+	then
+		echo 1
+		return
+	fi
+	if [ $MM -lt 0 -o $MM -gt 59 ]
+	then
+		echo 1
+		return
+	fi
+	echo 0
+}
 
 function procesarArchivo(){
         ARCHIVO_ACTUAL= $1
@@ -116,20 +140,13 @@ function procesarArchivo(){
         
 }
 
-FECHITA="10/10/2013"
-VALIDEZ=$(fechaValida $FECHITA)
-if [ $VALIDEZ != 0 ]
+FECHITA="14:001"
+VALIDEZ=$(horaValida $FECHITA)
+if [ $VALIDEZ == 0 ]
 then
-	echo "Fecha Invalida"
+	echo "OK"
 else
-	echo "Fecha Valida"
-	DIF_VALIDO=$(distanciaAFechaValida $FECHITA)
-	if [ $DIF_VALIDO -eq 0 ]
-	then
-		echo "Distancia Correcta"
-	else
-		echo "Mal dia"
-	fi
+	echo "ERROR"
 fi
 
 read hola
