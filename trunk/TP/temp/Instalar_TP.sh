@@ -30,9 +30,9 @@ function finalizarInstalacion(){
 function crearDirectorio(){
 	# -d para preguntar por directorio SI existe
 	if ! [ -d $1/ ]; then
-		./Grabar_L.sh "Instalar_TP" "Informativo" "Se creo el directorio "$1
 		#mkdir crea el directorio
 		mkdir -p $1
+		./Grabar_L.sh "Instalar_TP" "Informativo" "Se creo el directorio "$1
 	fi
 }
 
@@ -228,7 +228,8 @@ function definirExtensionArchivos(){
 #Si es suficiente continua, sino consulta al usuario
 function chequearEspacioARRIDIR(){
 	#obtener espacio que le queda en Kb
-	df $ARRIDIR > espacio.auxINST
+	#df $ARRIDIR > espacio.auxINST
+	df $CONFDIR > espacio.auxINST
 	
 	#obtengo la linea donde se encuentran los datos (ultima linea del archivo)
 	linea=`tail -1 espacio.auxINST`
@@ -330,6 +331,16 @@ function definirParametros(){
 	definirLOGSIZE
 }
 
+function listarArchivos(){
+	echo "Archivos:"
+	./Grabar_L.sh "Instalar_TP" "Informativo" "Archivos:"
+	if [ $1 -eq 1 ]; then
+		msj=`ls $2`
+		echo $msj
+		./Grabar_L.sh "Instalar_TP" "Informativo" "$msj"
+	fi
+}
+
 function imprimirSusRespuestas(){
 	clear #Limpio la pantalla
 	
@@ -340,14 +351,17 @@ function imprimirSusRespuestas(){
 	libreria="Librería del Sistema: "$CONFDIR
 	echo $libreria
 	./Grabar_L.sh "Instalar_TP" "Informativo" "$libreria"
+	listarArchivos $1 $CONFDIR
 	
 	ejec="Ejecutables: "$BINDIR
 	echo $ejec
 	./Grabar_L.sh "Instalar_TP" "Informativo" "$ejec"
+	listarArchivos $1 $BINDIR
 	
 	maestr="Archivos maestros: "$MAEDIR
 	echo $maestr
 	./Grabar_L.sh "Instalar_TP" "Informativo" "$maestr"
+	listarArchivos $1 $MAEDIR
 	
 	extern="Directorio de arribo de archivos externos: "$ARRIDIR
 	echo $extern
@@ -367,7 +381,6 @@ function imprimirSusRespuestas(){
 	
 	reporte="Reportes de salida: "$REPODIR
 	echo $reporte
-	./Grabar_L.sh "Instalar_TP" "Informativo" "$reporte"
 	
 	proc="Archivos procesados: "$PROCDIR
 	echo $proc
@@ -418,7 +431,7 @@ function definirParametrosPorUsuario(){
 	RTA="NO"
 	while [ "${RTA^^}" == "NO" ]; do
 		definirParametros
-		imprimirSusRespuestas
+		imprimirSusRespuestas 0
 		entradaSiNo "Es correcta la configuracion?"
 		if [ "${RTA^^}" == "NO" ]; then
 			./Grabar_L.sh "Instalar_TP" "Informativo" "Configuracion rechazada por el usuario"
@@ -474,6 +487,9 @@ function actualizarRegistroExistente(){
 		echo $1"="$2"="$(whoami)"="`date` >> $CONFTEMP
 		mensaje="El valor de "$1" fue actualizado a: "$2
 		./Grabar_L.sh "Instalar_TP" "Informativo" "$mensaje"
+		if [ $3 -eq 1 ]; then
+			crearDirectorio $2
+		fi
 	else
 		echo $linea_original >> $CONFTEMP
 	fi
@@ -487,19 +503,19 @@ function actualizarConfiguracionExistente(){
 	CONFTEMP=$ARCHCONF".auxINST"
 	> $CONFTEMP #Crea el archivo vacio
 	
-	actualizarRegistroExistente "GRUPO" $GRUPO
-	actualizarRegistroExistente "CONFDIR" $CONFDIR
-	actualizarRegistroExistente "BINDIR" $BINDIR
-	actualizarRegistroExistente "MAEDIR" $MAEDIR
-	actualizarRegistroExistente "ARRIDIR" $ARRIDIR
-	actualizarRegistroExistente "ACEPDIR" $ACEPDIR
-	actualizarRegistroExistente "RECHDIR" $RECHDIR
-	actualizarRegistroExistente "REPODIR" $REPODIR
-	actualizarRegistroExistente "PROCDIR" $PROCDIR
-	actualizarRegistroExistente "LOGDIR" $LOGDIR
-	actualizarRegistroExistente "LOGEXT" $LOGEXT
-	actualizarRegistroExistente "LOGSIZE" $LOGSIZE
-	actualizarRegistroExistente "DATASIZE" $DATASIZE
+	actualizarRegistroExistente "GRUPO" $GRUPO 1
+	actualizarRegistroExistente "CONFDIR" $CONFDIR 1
+	actualizarRegistroExistente "BINDIR" $BINDIR 1
+	actualizarRegistroExistente "MAEDIR" $MAEDIR 1
+	actualizarRegistroExistente "ARRIDIR" $ARRIDIR 1
+	actualizarRegistroExistente "ACEPDIR" $ACEPDIR 1
+	actualizarRegistroExistente "RECHDIR" $RECHDIR 1
+	actualizarRegistroExistente "REPODIR" $REPODIR 1
+	actualizarRegistroExistente "PROCDIR" $PROCDIR 1
+	actualizarRegistroExistente "LOGDIR" $LOGDIR 1
+	actualizarRegistroExistente "LOGEXT" $LOGEXT 0
+	actualizarRegistroExistente "LOGSIZE" $LOGSIZE 0
+	actualizarRegistroExistente "DATASIZE" $DATASIZE 0
 	
 	#elimina la configuracion anterior
 	mv $CONFTEMP $ARCHCONF
@@ -568,8 +584,8 @@ function verificarInstalacion(){
 CONFDIR=grupo02/conf/
 export CONFDIR
 GRUPO=grupo02
+DIR_ACTUAL=$PWD
 
-crearDirectorio $GRUPO"/"
 crearDirectorio $GRUPO"/conf/"
 
 ./Grabar_L.sh "Instalar_TP" "Informativo" "Inicio de Instalación"
@@ -577,6 +593,7 @@ crearDirectorio $GRUPO"/conf/"
 ./Grabar_L.sh "Instalar_TP" "Informativo" "Directorio de Configuración: "$CONFDIR
 
 ARCHCONF=$CONFDIR"Instalar_TP.conf"
+export ARCHCONF
 
 if [ -f $ARCHCONF ]; then
 	verificarInstalacion
