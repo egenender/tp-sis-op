@@ -5,18 +5,15 @@
 # Funcion para mover de archivos
 # 
 
-# TODO: se podria hacer que devuelva distintos codigos de error para
-# identificarlos. Por ahora devuelve siempre 1 en caso de algun error.
-
 # Verifica si existe el archivo a mover. En caso de no existir, 
 # no se mueve nada y se devuelve 1.
 # Trabaja con variables de entorno.
 function existeOrigen {
 	if [ ! -f "$RUTA_ORIGEN" ] && [ ! -d "$RUTA_ORIGEN" ]; then
 		# archivo origen no existe / directorio no existe
-		echo "No existe el archivo origen!" #DEBUG
-		exit 1
+		return 1
 	fi
+  return 0
 }
 
 # Verifica si existe el destino a donde mover. En caso de no existir, 
@@ -25,9 +22,9 @@ function existeOrigen {
 function existeDestino {
 	if [ ! -d "$RUTA_DESTINO" ]; then
 		# ruta destino no existe
-		echo "No existe el destino!" #DEBUG
-		exit 1
+		return 1
 	fi
+  return 0
 }
 
 # Verifica si existe el destino es el mismo que el origen.
@@ -36,9 +33,9 @@ function existeDestino {
 function destinoEsOrigen {
 	if [ "$RUTA_DESTINO" == `dirname "$RUTA_ORIGEN"` ]; then
 		# se quiere mover al mismo lugar
-		echo "Mismo destino que origen!" #DEBUG
-		exit 1
+		return 1
 	fi
+  return 0
 }
 
 # Verifica si ya existe un archivo en el destino con el mismo nombre
@@ -52,14 +49,13 @@ function verificarDuplicado {
 	for ARCHIVO in `find "$RUTA_DESTINO" -maxdepth 1` ; do
 		if [ $ARCHIVO == "$RUTA_DESTINO/$ARCHIVO_ORIGEN" ] ; then
 			DUPLICADO="TRUE"
-			echo "Archivo duplicado!" #DEBUG
 			break
 		fi
 	done
 	
 	# Si no estaba duplicado salimos y dejamos todo como estaba:
 	if [ $DUPLICADO == "FALSE" ] ; then
-		return 0
+		return 0 # como no duplique, sale con 0
 	fi
 	
 	# Como estaba duplicado, vemos si existe el directorio "/dup" en el destino:
@@ -68,7 +64,6 @@ function verificarDuplicado {
 	NUM=1
 	if [ "$DIRECTORIO" == "$RUTA_DESTINO/dup" ] ; then
 		DUP="TRUE"
-		echo "/dup encontrado!" #DEBUG
 		# Aumentamos el contador:
 		for DUPLICADO in `find "$RUTA_DESTINO/dup" -maxdepth 1 -name "$ARCHIVO_ORIGEN.*"` ; do
 			let NUM=$NUM+1
@@ -81,20 +76,25 @@ function verificarDuplicado {
 		mkdir "$RUTA_DESTINO/dup"
 		ARCHIVO_DESTINO="$ARCHIVO_ORIGEN.1"
 	fi
+   
 	RUTA_DESTINO="$RUTA_DESTINO/dup"
-	echo "Se va a mover el archivo a $RUTA_DESTINO como $ARCHIVO_DESTINO" #DEBUG
+  return 1 # como duplique, sale con 1
 }
 
 # Funcion principal del script.
 #
 # Parametros:
-# 	1 : origen				(ej: /origen/archivo.txt)
-#	2 : destino				(ej: /destino)
+#   1 : origen				      (ej: /origen/archivo.txt)
+#	2 : destino				     (ej: /destino)
 #	3 : comando que invoca	(optativo)
 #
 # Devuelve:
-#	0 : si movio el archivo
-#	1 : en caso de error
+#	0 : si movio el archivo al destino
+#	1 : si movio el archivo al destino pero con carpeta dup (duplicado)
+#  2 : si no existe el origen (no mueve)
+#  3 : si no existe el destino (no mueve)
+#  4 : si el destino es el mismo que el origen
+#  
 
 RUTA_ORIGEN=$1
 RUTA_DESTINO=$2
@@ -102,18 +102,29 @@ COMANDO=$3
 
 ARCHIVO_ORIGEN=`basename $RUTA_ORIGEN`	# Obtengo nombre del archivo
 ARCHIVO_DESTINO=$ARCHIVO_ORIGEN			# El nombre en el destino (puede llegar a cambiar)
-
-# DEBUG:
-echo "Voy a mover el archivo $RUTA_ORIGEN a $RUTA_DESTINO"
 	
 # Validaciones...
 # TODO: Validar que se hayan pasado los parametros!
+
 existeOrigen
+if [ $? == 1 ] ; then
+  return 2 # No existe Origen
+fi
+
 existeDestino
+if [ $? == 1 ] ; then
+  return 3 # No existe Destino
+fi
+
 destinoEsOrigen
+if [ $? == 1 ] ; then
+  return 4 # Mismo destino que origen
+fi
+
 verificarDuplicado # va a modificar RUTA_DESTINO y el ARCHIVO_DESTINO (en caso de ser necesario)
+DUPLIQUE=$? 
 
 # Movemos...
 mv "$RUTA_ORIGEN" "$RUTA_DESTINO/$ARCHIVO_DESTINO"
-echo "TODO BIEN!" #DEBUG
-exit 0
+
+return DUPLIQUE # 0 si es OK, 1 si duplico
