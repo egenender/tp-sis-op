@@ -208,7 +208,7 @@ do
 				#~ Si da algún tipo de error se debe mostrar por pantalla el mensaje explicativo
 				#~ DUDA: POR CUAL PANTALLA SI ESTOY EN EL BACKGROUND??? si queres lo escribo en el log...
 				
-				$BINDIR/Reservar_B.sh &
+				$BINDIR/Reservar_B.sh 
 				
 			fi
 			
