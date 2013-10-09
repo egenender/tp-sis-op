@@ -10,17 +10,26 @@ function inicializarReservar(){
 }
 
 function cumpleFormato(){
-        #Ambos tipos de archivo tienen el mismo tipo de formato, con los mismos
-        #campos como opcionales. El formato es:
-        # Referencia Interna (caracteres), opcional
-        # Fecha de la funcion (dd/mm/aa), obligatorio
-        # Hora de la funcion (hh:mm), obligatorio
-        # nro de fila (caracteres), opcional
-        # nro de butaca (caracteres), opcional
-        # Cantida de butacas solicitadas (numerico), obligatorio
-        # Seccion (caracteres), opcional
+    #Ambos tipos de archivo tienen el mismo tipo de formato, con los mismos
+    #campos como opcionales. El formato es:
+    # Referencia Interna (caracteres), opcional
+    # Fecha de la funcion (dd/mm/aa), obligatorio
+    # Hora de la funcion (hh:mm), obligatorio
+    # nro de fila (caracteres), opcional
+    # nro de butaca (caracteres), opcional
+    # Cantida de butacas solicitadas (numerico), obligatorio
+    # Seccion (caracteres), opcional
         
-        echo 1
+    #Me fijo que tenga todos los campos en todas las lineas, con el formato (mas o menos) adecuado:
+	CANT_LINEAS=`wc -l < "$1"`
+	CANT_LINEAS_FORMATO=`grep "^[^;]*;[0-9][0-9]/[0-9][0-9]/[0-9][0-9][0-9][0-9];[0-9][0-9]:[0-9][0-9];[^;]*;[^;]*;[0-9]+;[^;]*$" "$1" | wc -l`
+	
+	if [ $CANT_LINEAS == $CANT_LINEAS_FORMATO ]
+	then
+		echo 0
+	else
+		echo 1
+	fi
 }
 
 function fechaValida(){
@@ -140,8 +149,8 @@ function procesarArchivo(){
         
 }
 
-FECHITA="14:001"
-VALIDEZ=$(horaValida $FECHITA)
+ARCHIVITO="archivito.txt"
+VALIDEZ=$(cumpleFormato $ARCHIVITO)
 if [ $VALIDEZ == 0 ]
 then
 	echo "OK"
