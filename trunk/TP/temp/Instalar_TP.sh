@@ -7,7 +7,6 @@
 #Elimina los archivos temporales ( extension ".auxINST" )
 #Graba en el log el motivo de finalizacion (si hubo error, el motivo, o finalizo correctamente)
 function finalizarInstalacion(){
-
 	clear
 
 	rm -f *.auxINST
@@ -17,13 +16,14 @@ function finalizarInstalacion(){
 		echo ""
 		echo "La Instalacion ha concluido Satisfactoriamente."
 		echo ""
+		exit 0
 	else
 		echo ""
 		echo "INSTALACION ABORTADA"
 		echo ""
+		exit 1
 	fi
 
-	exit 0
 }
 
 #Crea un directorio si este no existe
@@ -86,30 +86,63 @@ function chequeoPerl(){
 
 }
 
+function modificarVarsPorFallo(){
+	if [ $FALLOBINDIR -eq 1 ]; then
+		BINDIR="bin"
+	fi
+	if [ $FALLOMAEDIR -eq 1 ]; then
+		MAEDIR="mae"
+	fi
+	if [ $FALLOARRIDIR -eq 1 ]; then
+		ARRIDIR="arribos"
+	fi
+	if [ $FALLOACEPDIR -eq 1 ]; then
+		ACEPDIR="aceptados"
+	fi
+	if [ $FALLORECHDIR -eq 1 ]; then
+		RECHDIR="rechazados"
+	fi
+	if [ $FALLOREPODIR -eq 1 ]; then
+		REPODIR="listados"
+	fi
+	if [ $FALLOPROCDIR -eq 1 ]; then
+		PROCDIR="procesados"
+	fi
+	if [ $FALLOLOGDIR -eq 1 ]; then
+		LOGDIR="log"
+	fi
+	if [ $FALLODATASIZE -eq 1 ]; then
+		DATASIZE=100
+	fi
+}
+
 #Se setean los parametros con los valores default
 function setearParametrosDefault(){
 	BINDIR="bin"
-	export BINDIR
 	MAEDIR="mae"
-	export MAEDIR
 	ARRIDIR="arribos"
-	export ARRIDIR
 	ACEPDIR="aceptados"
-	export ACEPDIR
 	RECHDIR="rechazados"
-	export RECHDIR
 	REPODIR="listados"
-	export REPODIR
 	PROCDIR="procesados"
-	export PROCDIR
 	LOGDIR="log"
-	export LOGDIR
 	DATASIZE=100
-	export DATASIZE
 	LOGEXT="log"
-	export LOGEXT
 	LOGSIZE=400
-	export LOGSIZE
+	exportarVariables
+}
+
+#primer parametro: variable a tratar
+#segundo parametro: valor default de la variable
+#tercer parametro: mensaje
+function definirParametro(){
+	echo $2 "("$GRUPO"/"$1"):"
+	read lectura
+	RESULTADO=$1
+	if [ ! "$lectura" == "" ]; then
+		RESULTADO=$lectura
+		./Grabar_L.sh "Instalar_TP" "Informativo" "Usuario ha redefinido: "$3". Con el valor: "$RESULTADO
+	fi
 }
 
 function definirBINDIR(){
@@ -224,10 +257,9 @@ function definirExtensionArchivos(){
 	fi
 }
 
-#Chequea el espacio disponible en la direccion ARRIDIR
-#Si es suficiente continua, sino consulta al usuario
-function chequearEspacioARRIDIR(){
+function obtenerEspacio(){	
 	#obtener espacio que le queda en Kb
+	#que hago, ARRIDIR no existe todavia
 	#df $ARRIDIR > espacio.auxINST
 	df $CONFDIR > espacio.auxINST
 	
@@ -245,7 +277,12 @@ function chequearEspacioARRIDIR(){
 	
 	#Como el valor esta en Kb divido para tenerlo en Mb
 	TAM=$(echo "$TAM / 1024" |bc -l)
-	
+}
+
+#Chequea el espacio disponible en la direccion ARRIDIR
+#Si es suficiente continua, sino consulta al usuario
+function chequearEspacioARRIDIR(){
+	obtenerEspacio
 	#Si TAM es menor que DATASIZE comp es 1
 	comp=`echo "$DATASIZE > $TAM" | bc`
 	HAY_ESPACIO="SI"
@@ -257,19 +294,6 @@ function chequearEspacioARRIDIR(){
 		echo "Espacio Insuficiente"
 		echo "Cancele la instalación e inténtelo mas tarde o vuelva a intentarlo con otro valor"
 		HAY_ESPACIO="NO"
-	fi
-}
-
-#primer parametro: variable a tratar
-#segundo parametro: valor default de la variable
-#tercer parametro: mensaje
-function definirParametro(){
-	echo $2 "("$GRUPO"/"$1"):"
-	read lectura
-	RESULTADO=$1
-	if [ ! "$lectura" == "" ]; then
-		RESULTADO=$lectura
-		./Grabar_L.sh "Instalar_TP" "Informativo" "Usuario ha redefinido: "$3". Con el valor: "$RESULTADO
 	fi
 }
 
@@ -332,15 +356,24 @@ function definirParametros(){
 }
 
 function listarArchivos(){
-	echo "Archivos:"
-	./Grabar_L.sh "Instalar_TP" "Informativo" "Archivos:"
-	if [ $1 -eq 1 ]; then
-		msj=`ls $2`
-		echo $msj
-		./Grabar_L.sh "Instalar_TP" "Informativo" "$msj"
+	if [ -d "$1" ]; then
+		msj=`ls $1`
+		if [ "$msj" == "" ]; then
+			echo "Directorio Vacio"
+			./Grabar_L.sh "Instalar_TP" "Informativo" "Directorio "$2" vacio."
+		else
+			echo "Archivos:"
+			./Grabar_L.sh "Instalar_TP" "Informativo" "Archivos:"
+			echo $msj
+			./Grabar_L.sh "Instalar_TP" "Informativo" "$msj"
+		fi
+	else
+		echo "No existe el directorio."
+		./Grabar_L.sh "Instalar_TP" "Informativo" "Directorio "$2" no existe"
 	fi
 }
 
+#si se desea ademas que liste el contenido de las carpetas, pasar parametro = 1
 function imprimirSusRespuestas(){
 	clear #Limpio la pantalla
 	
@@ -351,17 +384,23 @@ function imprimirSusRespuestas(){
 	libreria="Librería del Sistema: "$CONFDIR
 	echo $libreria
 	./Grabar_L.sh "Instalar_TP" "Informativo" "$libreria"
-	listarArchivos $1 $CONFDIR
+	if [ $1 -eq 1 ]; then
+		listarArchivos $CONFDIR
+	fi
 	
 	ejec="Ejecutables: "$BINDIR
 	echo $ejec
 	./Grabar_L.sh "Instalar_TP" "Informativo" "$ejec"
-	listarArchivos $1 $BINDIR
+	if [ $1 -eq 1 ]; then
+		listarArchivos $BINDIR
+	fi
 	
 	maestr="Archivos maestros: "$MAEDIR
 	echo $maestr
 	./Grabar_L.sh "Instalar_TP" "Informativo" "$maestr"
-	listarArchivos $1 $MAEDIR
+	if [ $1 -eq 1 ]; then
+		listarArchivos $MAEDIR
+	fi
 	
 	extern="Directorio de arribo de archivos externos: "$ARRIDIR
 	echo $extern
@@ -394,8 +433,7 @@ function imprimirSusRespuestas(){
 	echo $tamMax
 	./Grabar_L.sh "Instalar_TP" "Informativo" "$tamMax"
 	
-	#??? Lista es un estado o hay que mantenerlo ???
-	estado="Estado de la instalacion: LISTA"
+	estado="Estado de la instalacion: "$2
 	echo $estado
 	./Grabar_L.sh "Instalar_TP" "Informativo" "$estado"
 	
@@ -411,7 +449,7 @@ function verificarCondicionesDeInstalacion(){
 	
 	if [ "${RTA^^}" == "NO" ]; then
 		finalizarInstalacion "El Usuario NO Aceptó los terminos y Condiciones de Instalacion. INSTALACION ABORTADA" "ERROR"
-	fi	
+	fi
 }
 
 #Pregunta al usuario si esta seguro de querer instalar el programa
@@ -431,13 +469,13 @@ function definirParametrosPorUsuario(){
 	RTA="NO"
 	while [ "${RTA^^}" == "NO" ]; do
 		definirParametros
-		imprimirSusRespuestas 0
+		imprimirSusRespuestas 0 "LISTA"
 		entradaSiNo "Es correcta la configuracion?"
 		if [ "${RTA^^}" == "NO" ]; then
 			./Grabar_L.sh "Instalar_TP" "Informativo" "Configuracion rechazada por el usuario"
 			clear
 		fi
-	done	
+	done
 }
 
 #Se crean todos los directorios necesarios (en caso de no existir)
@@ -487,9 +525,6 @@ function actualizarRegistroExistente(){
 		echo $1"="$2"="$(whoami)"="`date` >> $CONFTEMP
 		mensaje="El valor de "$1" fue actualizado a: "$2
 		./Grabar_L.sh "Instalar_TP" "Informativo" "$mensaje"
-		if [ $3 -eq 1 ]; then
-			crearDirectorio $2
-		fi
 	else
 		echo $linea_original >> $CONFTEMP
 	fi
@@ -503,19 +538,19 @@ function actualizarConfiguracionExistente(){
 	CONFTEMP=$ARCHCONF".auxINST"
 	> $CONFTEMP #Crea el archivo vacio
 	
-	actualizarRegistroExistente "GRUPO" $GRUPO 1
-	actualizarRegistroExistente "CONFDIR" $CONFDIR 1
-	actualizarRegistroExistente "BINDIR" $BINDIR 1
-	actualizarRegistroExistente "MAEDIR" $MAEDIR 1
-	actualizarRegistroExistente "ARRIDIR" $ARRIDIR 1
-	actualizarRegistroExistente "ACEPDIR" $ACEPDIR 1
-	actualizarRegistroExistente "RECHDIR" $RECHDIR 1
-	actualizarRegistroExistente "REPODIR" $REPODIR 1
-	actualizarRegistroExistente "PROCDIR" $PROCDIR 1
-	actualizarRegistroExistente "LOGDIR" $LOGDIR 1
-	actualizarRegistroExistente "LOGEXT" $LOGEXT 0
-	actualizarRegistroExistente "LOGSIZE" $LOGSIZE 0
-	actualizarRegistroExistente "DATASIZE" $DATASIZE 0
+	actualizarRegistroExistente "GRUPO" $GRUPO
+	actualizarRegistroExistente "CONFDIR" $CONFDIR
+	actualizarRegistroExistente "BINDIR" $BINDIR
+	actualizarRegistroExistente "MAEDIR" $MAEDIR
+	actualizarRegistroExistente "ARRIDIR" $ARRIDIR
+	actualizarRegistroExistente "ACEPDIR" $ACEPDIR
+	actualizarRegistroExistente "RECHDIR" $RECHDIR
+	actualizarRegistroExistente "REPODIR" $REPODIR
+	actualizarRegistroExistente "PROCDIR" $PROCDIR
+	actualizarRegistroExistente "LOGDIR" $LOGDIR
+	actualizarRegistroExistente "LOGEXT" $LOGEXT
+	actualizarRegistroExistente "LOGSIZE" $LOGSIZE
+	actualizarRegistroExistente "DATASIZE" $DATASIZE
 	
 	#elimina la configuracion anterior
 	mv $CONFTEMP $ARCHCONF
@@ -572,11 +607,227 @@ function instalar(){
 	finalizarInstalacion "Instalacion: CONCLUIDA" "OK"
 }
 
+function obtenerValoresExistentes(){
+	obtenerValorExistente "BINDIR"
+	BINDIR=$VALOR_EN_ARCH
+	obtenerValorExistente "MAEDIR"
+	MAEDIR=$VALOR_EN_ARCH
+	obtenerValorExistente "ARRIDIR"
+	ARRIDIR=$VALOR_EN_ARCH
+	obtenerValorExistente "ACEPDIR"
+	ACEPDIR=$VALOR_EN_ARCH
+	obtenerValorExistente "RECHDIR"
+	RECHDIR=$VALOR_EN_ARCH
+	obtenerValorExistente "REPODIR"
+	REPODIR=$VALOR_EN_ARCH
+	obtenerValorExistente "PROCDIR"
+	PROCDIR=$VALOR_EN_ARCH
+	obtenerValorExistente "LOGDIR"
+	LOGDIR=$VALOR_EN_ARCH
+	obtenerValorExistente "LOGEXT"
+	LOGEXT=$VALOR_EN_ARCH
+	obtenerValorExistente "LOGSIZE"
+	LOGSIZE=$VALOR_EN_ARCH
+	obtenerValorExistente "DATASIZE"
+	DATASIZE=$VALOR_EN_ARCH
+}
+
+function exportarVariables(){
+	export BINDIR
+	export MAEDIR
+	export ARRIDIR
+	export ACEPDIR
+	export RECHDIR
+	export REPODIR
+	export PROCDIR
+	export LOGDIR
+	export LOGEXT
+	export LOGSIZE
+	export DATASIZE
+	
+}
+
+function verificarComponenteMAEDIR(){
+	FALLOMAEDIR=0
+	if ! [ -d $MAEDIR ]; then
+		./Grabar_L.sh "Instalar_TP" "Informativo" "No existe el directorio de archivos maestros: "$MAEDIR
+		echo "No existe el directorio de archivos maestros:" $MAEDIR >> componentesFaltantes.auxINST
+		FALLOMAEDIR=1
+		return 1
+	fi
+	if ! [ -f $MAEDIR"/salas.mae" ]; then
+		./Grabar_L.sh "Instalar_TP" "Informativo" "No existe el archivo maestro de salas en: "$MAEDIR
+		echo "Archivo maestro de salas:" salas.mae >> componentesFaltantes.auxINST
+		FALLOMAEDIR=1
+	fi
+	if ! [ -f $MAEDIR"/obras.mae" ]; then
+		./Grabar_L.sh "Instalar_TP" "Informativo" "No existe el archivo maestro de obras en: "$MAEDIR
+		echo "Archivo maestro de obras:" obras.mae >> componentesFaltantes.auxINST
+		FALLOMAEDIR=1
+	fi
+}
+
+function verificarEjecutable(){
+	if ! [ -f "$1"/"$2" ]; then
+		msj="No existe el archivo "$2" en: "$1
+		./Grabar_L.sh "Instalar_TP" "Informativo" "$msj"
+		echo "Archivo ejecutable: ""$2" >> componentesFaltantes.auxINST
+		FALLOBINDIR=1
+	fi
+}
+
+function verificarComponenteBINDIR(){
+	FALLOBINDIR=0
+	if ! [ -d $BINDIR ]; then
+		./Grabar_L.sh "Instalar_TP" "Informativo" "No existe el directorio de ejecutables: "$BINDIR
+		echo "No existe el directorio de archivos ejecutables:" $BINDIR >> componentesFaltantes.auxINST
+		FALLOBINDIR=1
+		return 1
+	fi
+	verificarEjecutable $BINDIR Iniciar_B.sh
+	verificarEjecutable $BINDIR Recibir_B.sh
+	verificarEjecutable $BINDIR Reservar_B.sh
+	verificarEjecutable $BINDIR Grabar_L.sh
+	verificarEjecutable $BINDIR Mover_B.sh
+	verificarEjecutable $BINDIR Start_D.sh
+	verificarEjecutable $BINDIR Stop_D.sh
+}
+
+function verificarComponenteARRIDIR(){
+	FALLOARRIDIR=0
+	if ! [ -d $ARRIDIR ]; then
+		./Grabar_L.sh "Instalar_TP" "Informativo" "No existe el directorio de arribos: "$ARRIDIR
+		echo "No existe el directorio de arribos: "$ARRIDIR >> componentesFaltantes.auxINST
+		FALLOARRIDIR=1
+	fi
+}
+
+function verificarComponenteACEPDIR(){
+	FALLOACEPDIR=0
+	if ! [ -d $ACEPDIR ]; then
+		./Grabar_L.sh "Instalar_TP" "Informativo" "No existe el directorio de archivos aceptados: "$ACEPDIR
+		echo "No existe el directorio de archivos aceptados: "$ACEPDIR >> componentesFaltantes.auxINST
+		FALLOACEPDIR=1
+	fi
+}
+
+function verificarComponenteRECHDIR(){
+	FALLORECHDIR=0
+	if ! [ -d $RECHDIR ]; then
+		./Grabar_L.sh "Instalar_TP" "Informativo" "No existe el directorio de archivos rechazados: "$RECHDIR
+		echo "No existe el directorio de archivos rechazados: "$RECHDIR >> componentesFaltantes.auxINST
+		FALLORECHDIR=1
+	fi
+}
+
+function verificarComponenteREPODIR(){
+	FALLOREPODIR=0
+	if ! [ -d $REPODIR ]; then
+		./Grabar_L.sh "Instalar_TP" "Informativo" "No existe el directorio de reportes de salida: "$REPODIR
+		echo "No existe el directorio de reportes de salida: "$REPODIR >> componentesFaltantes.auxINST
+		FALLOREPODIR=1
+	fi
+}
+
+function verificarComponentePROCDIR(){
+	FALLOPROCDIR=0
+	if ! [ -d $PROCDIR ]; then
+		./Grabar_L.sh "Instalar_TP" "Informativo" "No existe el directorio de archivos procesados: "$PROCDIR
+		echo "No existe el directorio de archivos procesados: "$PROCDIR >> componentesFaltantes.auxINST
+		FALLOPROCDIR=1
+	fi
+}
+
+function verificarComponenteLOGDIR(){
+	FALLOLOGDIR=0
+	if ! [ -d $LOGDIR ]; then
+		./Grabar_L.sh "Instalar_TP" "Informativo" "No existe el directorio de archivos de log: "$LOGDIR
+		 echo "No existe el directorio de archivos de log: "$LOGDIR >> componentesFaltantes.auxINST
+		FALLOLOGDIR=1
+	fi
+}
+
+function verificarComponenteDATASIZE() {
+	obtenerEspacio
+	FALLODATASIZE=0
+	#Si TAM es menor que DATASIZE comp es 1
+	comp=`echo "$DATASIZE > $TAM" | bc`
+	if [ $comp -eq 1 ];then
+		echo "Tamaño de datos definido muy elevado: "$DATASIZE  >> componentesFaltantes.auxINST
+		DATASIZE=100
+		FALLODATASIZE=1
+	fi
+	comp=`echo "$DATASIZE > $TAM" | bc`
+	if [ $comp -eq 1 ];then
+		./Grabar_L.sh "Instalar_TP" "Informativo" "Insuficiente espacio en disco"
+		./Grabar_L.sh "Instalar_TP" "Informativo" "Espacio disponible: "$TAM" Mb"
+		./Grabar_L.sh "Instalar_TP" "Informativo" "Espacio requerido: "$DATASIZE" Mb"
+		echo "Espacio Insuficiente"
+		msj="Espacio insuficiente para datos. Instalacion Abortada"
+		finalizarInstalacion "$msj" "ERROR"
+	fi
+}
+
+function verificarComponentes(){
+	verificarComponenteBINDIR
+	verificarComponenteMAEDIR
+	verificarComponenteARRIDIR
+	verificarComponenteDATASIZE
+	verificarComponenteACEPDIR
+	verificarComponenteRECHDIR
+	verificarComponenteREPODIR
+	verificarComponentePROCDIR
+	verificarComponenteLOGDIR
+}
+
+function imprimirFaltantes(){
+	echo "Componentes Faltantes:"
+	cat componentesFaltantes.auxINST
+}
+
 #???
-function verificarInstalacion(){
-	setearParametrosDefault
+function completarInstalacion(){
+	entradaSiNo "Desea Completar la Instalación?"
+	
+	if [ "${RTA^^}" == "NO" ]; then
+		finalizarInstalacion "El Usuario decidió no completar la instalación" "ERROR"
+	fi
+	
+	chequeoPerl
+	
+	imprimirSusRespuestas 1 "LISTA"
+	
+	confirmarInstalacion
+	
+	crearDirectorios
+	
+	moverArchivos
+	
 	actualizarConfiguracionExistente
-	echo "Falta Implementar verificarInstalacion"
+	
+	finalizarInstalacion "Instalacion: CONCLUIDA" "OK"
+}
+
+function verificarInstalacion(){
+	obtenerValoresExistentes
+	verificarComponentes
+	
+	sumaFallos=`expr $FALLOBINDIR + $FALLOMAEDIR + $FALLOARRIDIR + $FALLODATASIZE + $FALLOACEPDIR + $FALLORECHDIR + $FALLOREPODIR + $FALLOPROCDIR + $FALLOLOGDIR`
+	echo $sumaFallos
+	if [ $sumaFallos -eq 0 ]; then
+		imprimirSusRespuestas 1 "COMPLETA"
+		read basura
+		finalizarInstalacion "Proceso de Instalación Cancelado" "OK"
+	fi
+	
+	imprimirSusRespuestas 1 "INCOMPLETA"
+	imprimirFaltantes
+	
+	modificarVarsPorFallo
+	
+	exportarVariables
+	
+	completarInstalacion
 }
 
 
