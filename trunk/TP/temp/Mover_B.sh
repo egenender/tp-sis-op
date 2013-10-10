@@ -108,17 +108,17 @@ ARCHIVO_DESTINO=$ARCHIVO_ORIGEN			# El nombre en el destino (puede llegar a camb
 
 existeOrigen
 if [ $? == 1 ] ; then
-  return 2 # No existe Origen
+  exit 2 # No existe Origen
 fi
 
 existeDestino
 if [ $? == 1 ] ; then
-  return 3 # No existe Destino
+  exit 3 # No existe Destino
 fi
 
 destinoEsOrigen
 if [ $? == 1 ] ; then
-  return 4 # Mismo destino que origen
+  exit 4 # Mismo destino que origen
 fi
 
 verificarDuplicado # va a modificar RUTA_DESTINO y el ARCHIVO_DESTINO (en caso de ser necesario)
@@ -127,4 +127,4 @@ DUPLIQUE=$?
 # Movemos...
 mv "$RUTA_ORIGEN" "$RUTA_DESTINO/$ARCHIVO_DESTINO"
 
-return DUPLIQUE # 0 si es OK, 1 si duplico
+exit $DUPLIQUE # 0 si es OK, 1 si duplico
