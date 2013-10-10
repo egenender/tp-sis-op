@@ -9,6 +9,8 @@ ARRIDIR="ARRIBOS"
 ACEPDIR="ACEPTADOS"
 RECHDIR="RECHAZADOS"
 REPODIR="INVITADOS"
+BINDIR='.'
+LANG="_ES.UTF-8"
 
 
 
@@ -31,12 +33,12 @@ function esDeSala(){
 			
 			CORREO=`echo "$filename"|cut -d- -f 2`
 			
-			if [ `grep "$SALA;[^;]*;[^;]*;[^;]*;[^;]*;$CORREO$" $MAEDIR/salas.mae | wc -l` -ge 1 ]
+			if [ `grep "^$SALA;[^;]*;[^;]*;[^;]*;[^;]*;$CORREO" $MAEDIR/salas.mae | wc -l` -ge 1 ]
 			then
 				echo "1"
 			else
 				
-				$BINDIR/Grabar_L.sh "Recibir_B" "$f: no existe combinacion SALA-CORREO en salas.mae"
+				$BINDIR/Grabar_L.sh "Recibir_B" "$f: no existe combinacion $SALA $CORREO en salas.mae"
 			
 				echo "0"
 			fi
@@ -69,12 +71,12 @@ function esDeProduccion(){
 		then 
 			
 			CORREO=`echo "$filename"|cut -d- -f 2`
-			if [ `grep "$OBRA;[^;]*;$CORREO;[^;]*$" $MAEDIR/obras.mae | wc -l` -ge 1 ] || [ `grep "$OBRA;[^;]*;[^;]*;$CORREO$" $MAEDIR/obras.mae | wc -l` -ge 1 ]
+			if [ `grep "^$OBRA;[^;]*;$CORREO;[^;]*" $MAEDIR/obras.mae | wc -l` -ge 1 ] || [ `grep "^$OBRA;[^;]*;[^;]*;$CORREO" $MAEDIR/obras.mae | wc -l` -ge 1 ]
 			then
 				echo "1"
 			else
 				
-				$BINDIR/Grabar_L.sh "Recibir_B" "$f: no existe combinacion OBRA-CORREO en obras.mae"
+				$BINDIR/Grabar_L.sh "Recibir_B" "$f: no existe combinacion $OBRA $CORREO en obras.mae"
 				
 				echo "0"
 			fi
@@ -206,9 +208,13 @@ do
 			#~ No se esta ejecutando, lo ejecuto
 				#~ Si arranca correctamente se debe mostrar por pantalla el process id de Reservar_B
 				#~ Si da algún tipo de error se debe mostrar por pantalla el mensaje explicativo
-				#~ DUDA: POR CUAL PANTALLA SI ESTOY EN EL BACKGROUND??? si queres lo escribo en el log...
 				
-				$BINDIR/Reservar_B.sh 
+				# $BINDIR/Reservar_B.sh &
+
+				echo "$!"
+				$BINDIR/Grabar_L.sh "Recibir_B" "arranco reservar con pid $! "
+
+
 				
 			fi
 			
