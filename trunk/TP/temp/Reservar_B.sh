@@ -247,7 +247,7 @@ function procesarArchivo(){
                 if [ ! $ID_COMBO in "${!Disponibilidades[@]}" ]
 				then
 					DISP=`sed 's/^$ID_COMBO;.*;([^;]*\);[^;]*$/\1/' $ARCH_COMBOS`
-					Disponibilidades=( ["$ID_COMBO"]=$DISP )
+					Disponibilidades["$ID_COMBO"]=$DISP
 				fi
                 DISPONIBILIDAD=${Disponibilidades["$ID_COMBO"]}
                 ID_OBRA=`sed 's%^$ID_COMBO;\([^;]*\);%\1% $ARCH_COMBOS`
