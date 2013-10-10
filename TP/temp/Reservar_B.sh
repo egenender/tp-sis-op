@@ -133,8 +133,9 @@ function rechazarReserva(){
 	FECHA_GRABACION=`date`
 	
 	
-	SALIDA="$RECH_REGISTRO";"$MOTIVO";"$3";"$4";"$5";"$FECHA_GRABACION";"$USER"
-	
+	SALIDA="$RECH_REGISTRO";"$MOTIVO";"$3";"$5";"$4";"$FECHA_GRABACION";"$USER"
+	echo $SALIDA >> $PROCDIR/reservas.nok 
+	registrosNOK=`expr $registrosNOK + 1`
 }
 
 function procesarArchivo(){
@@ -142,10 +143,8 @@ function procesarArchivo(){
         "$BINDIR"/Grabar_L.sh "Reservar_B" "Informativo" "Se procesa el archivo $ARCHIVO_ACTUAL"
         
         #Movemos el archivo a procesar a PROCDIR
-        "$BINDIR"/Mover_B $ARCHIVO_ACTUAL $PROCDIR
-        MOVIMIENTO_CORRECTO=$?
-		#MOVIMIENTO_CORRECTO=0
-        if [ $MOVIMIENTO_CORRECTO != 0 ] 
+        
+        if [ `ls $PROCDIR | grep "^$ARCHIVO_ACTUAL$" | wc -l` ] 
         then
                 "$BINDIR"/Grabar_L.sh "Reservar_B" "Error" "Se rechaza el archivo por estar DUPLICADO"
                 "$BINDIR"/Mover_B $ARCHIVO_ACTUAL $RECHDIR
@@ -171,7 +170,8 @@ function procesarArchivo(){
         fi
 
         for linea in `cat $ARCHIVO_ACTUAL`
-        do      
+        do     	
+				registrosTOT=`expr $registrosTOT + 1`
 				#Separo los campos del registro
 				REF_INTERNA=`echo $linea | cut -d ";" -f 1`                
                 FECHA_REGISTRO=`echo $linea | cut -d ";" -f 2`
@@ -190,7 +190,7 @@ function procesarArchivo(){
 				VALIDEZ=$?
 				if [ $VALIDEZ != 0 ]
 				then
-					rechazarReserva $linea 1 "Falta Sala" "Falta Obra" $CORREO
+					rechazarReserva $linea 1 "Falta Obra" "Falta Sala" $CORREO
 					continue
 				fi
 				
@@ -200,7 +200,7 @@ function procesarArchivo(){
 				VALIDEZ=$?
 				if [ $VALIDEZ != 0 ]
 				then
-					rechazarReserva $linea 2 "Falta Sala" "Falta Obra" $CORREO $VALIDEZ
+					rechazarReserva $linea 2 "Falta Obra" "Falta Sala" $CORREO $VALIDEZ
 					continue
 				fi		
                 
@@ -209,55 +209,109 @@ function procesarArchivo(){
                 VALIDEZ=$?
                 if [ $VALIDEZ != 0 ]
                 then
-					rechazarReserva $linea 3 "Falta Sala" "Falta Obra" $CORREO
+					rechazarReserva $linea 3 "Falta Obra" "Falta Sala" $CORREO
 					continue
                 fi
                         
                 #Validar exitencia de evento:
                 ID=`echo "$ARCHIVO_ACTUAL"|cut -d- -f 1`
                 ARCH_COMBOS="$PROCDIR"/combos.dis
-                
-                #ESTO DE ACA ESTA MAL. Necesito saber si tengo una obra
-                #O una sala, por ahora asumo obra
-                REG_COMBOS=$ID;$FECHA_REGISTRO;$HORA_REGISTRO
-               
-                EXISTE=`grep "^[^;]*;$REG_COMBOS;" $ARCH_COMBOS | wc -l `
+				
+				if [ `expr $ID % 2` != 0 ]
+				then
+					ID_OBRA=$ID
+					ID_SALA="[^;]*"
+					
+				else
+					ID_OBRA="[^;]*"
+					ID_SALA=$ID
+				fi
+                    
+                EXISTE=`grep "^[^;]*;$ID_OBRA;$FECHA_REGISTRO;$HORA_REGISTRO;$ID_SALA;" $ARCH_COMBOS | wc -l `           
                 if [ $EXISTE == 0 ]
                 then
-					#Aca no deberian ir 'Falta sala' y 'Falta Obra', pero
-					#Despues lo toco
-					rechazarReserva $linea 4 "Falta Sala" "Falta Obra" $CORREO
+					if [ $ID_OBRA == "[^;]*" ]
+					then
+						ID_OBRA="Falta Obra"
+					else
+						ID_SALA="Falta Sala"
+					fi
+					rechazarReserva $linea 4 $ID_OBRA $ID_SALA $CORREO
 					continue
 				fi
 				
-				ID_COMBO=`sed 's%^\([^;]*\);$REG_COMBOS;%\1%`
+				ID_COMBO=`sed 's%^\([^;]*\);$ID_OBRA;$FECHA_REGISTRO;$HORA_REGISTRO;$ID_SALA;%\1% $ARCH_COMBOS`
 								
                 #Validar la disponibilidad
                 #Si es la primera vez que veo este combo en este ciclo:
                 if [ ! $ID_COMBO in "${!Disponibilidades[@]}" ]
 				then
-					DISP=`sed 's%^[^;]*;$REG_COMBOS;[^;]*;\([^;]*\);%\1%`
+					DISP=`sed 's/^$ID_COMBO;.*;([^;]*\);[^;]*$/\1/' $ARCH_COMBOS`
 					Disponibilidades=( ["$ID_COMBO"]=$DISP )
 				fi
                 DISPONIBILIDAD=${Disponibilidades["$ID_COMBO"]}
+                ID_OBRA=`sed 's%^$ID_COMBO;\([^;]*\);%\1% $ARCH_COMBOS`
+                ID_SALA=`sed 's%^$ID_COMBO;[^;]*;[^;]*;[^;]*;\([^;]*\);%\1% $ARCH_COMBOS`
                 
                 if [ $DISPONIBILIDAD < $CANT_RESERVAS ]
                 then
-					rechazarReserva $linea 5 "Falta Sala" "Falta Obra" $CORREO
+					rechazarReserva $linea 5 $ID_OBRA $ID_SALA $CORREO
                     continue
                 fi
                 
                 NUEVA_DISP=`expr $DISPONIBILIDAD - $CANT_RESERVAS`
                 Disponibilidades=( ["$ID_COMBO"]=$NUEVA_DISP )
-                
+				
+				#A partir de aca el registro ya es valido:
+				#Obtengo el nombre de la obra:
+				NOMBRE_OBRA=`sed 's%^$ID_OBRA;\([^;]*\);%\1%' $MAEDIR/obras.mae`
+				#Obtengo el nombre de la sala:
+				NOMBRE_SALA=`sed 's%^$ID_SALA;\([^;]*\);%\1%' $MAEDIR/salas.mae`
+				
+				FECHA=`date`
+				SALIDA="$ID_OBRA";"$NOMBRE_OBRA";"$FECHA_REGISTRO";"$HORA_REGISTRO";"$ID_SALA";"$NOMBRE_SALA";"$CANT_RESERVAS";"$ID_COMBO";"$REF_INTERNA";"$CANT_RESERVAS";"$CORREO";"$FECHA";"$USER"
+				echo $SALIDA >> $PROCDIR/reservas.ok 
+				registrosOK=`expr $registrosOK + 1`
         done
-        
+        #Muevo el archivo procesado:
+        "$BINDIR"/Mover_B $ARCHIVO_ACTUAL $PROCDIR
 }
 
 declare -A Disponibilidades
+registrosTOT=0
+registrosOK=0
+registrosNOK=0
 
 inicializarReservar
 for archivo in `ls $ACEPDIR`
 do
         procesarArchivo `echo "$ACEPDIR"$archivo`
 done
+
+#Verificacion:
+VERIF=`expr $registrosOK + $registrosNOK`
+if [ "$VERIF" != "$registrosTOT" ]
+then
+	echo "Algo se rompio...."
+fi
+
+#Actualizo las disponibilidades:
+for ID_COMBO in "${!Disponibilidades[@]}"
+do
+	#Busco la linea que estoy actualizando:
+	REG_INICIO=`sed 's/^\($ID_COMBO;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*\);[^;]*;[^;]*$/\1/' "$PROCDIR"/combos.dis`
+	REG_FIN=`sed 's/^$ID_COMBO;.*;\([^;]*\)$/\1/' "$PROCDIR"/combos.dis`
+		
+	TEMPORAL="$PROCDIR"/combosTEMP.dis
+	#Me quedo con todas las lineas excepto con la que estoy actualizando
+	sed '/^$ID_COMBO;/d' "$PROCDIR"/combos.dis > $TEMPORAL
+	
+	NUEVO_REG=`echo "$REG_INICIO";"${Disponibilidades["$ID_COMBO"]}";"$REG_FIN"`
+	
+	echo $NUEVO_REG >> "$PROCDIR"/combosTEMP.dis
+	cat "$PROCDIR"/combosTEMP.dis > "$PROCDIR"/combos.dis
+	rm "$PROCDIR"/combosTEMP.dis
+	"$BINDIR"/Grabar_L.sh "Reservar_B" "Informativo" "Actualizacion de Disponibilidad"
+done
+
+"$BINDIR"/Grabar_L.sh "Reservar_B" "Informativo" "Fin de Reservar_B"
