@@ -127,4 +127,4 @@ DUPLIQUE=$?
 # Movemos...
 mv "$RUTA_ORIGEN" "$RUTA_DESTINO/$ARCHIVO_DESTINO"
 
-exit $DUPLIQUE # 0 si es OK, 1 si duplico
+return $DUPLIQUE # 0 si es OK, 1 si duplico

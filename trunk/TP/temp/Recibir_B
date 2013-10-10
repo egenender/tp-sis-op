@@ -1,10 +1,30 @@
-Sat Oct 5 18:07:38 ART 2013 - Ciclo Nro 1
-Sat Oct 5 18:07:38 ART 2013 - Exito al procesar el archivo de reservas ARRIBOS/1-LEYER_DEMIAN@GMAIL.COM-fooStuff
-Sat Oct 5 18:07:38 ART 2013 - Exito al procesar el archivo de reservas ARRIBOS/1-MORA_ANTONIO@HOTMAIL.COM-fooStuff2
-Sat Oct 5 18:07:38 ART 2013 - Exito al procesar el archivo de reservas ARRIBOS/2-Teatro.El.Fino@reservas.com.ar-quehaces
-Sat Oct 5 18:07:38 ART 2013 - ARRIBOS/3-Teatro.El.Fino@reservas.com.ar-quehaces: no existe combinacion OBRA-CORREO en obras.mae
-Sat Oct 5 18:07:39 ART 2013 - ARRIBOS/3-Teatro.El.Fino@reservas.com.ar-quehaces: archivo no es ni de reservas ni de invitados
-Sat Oct 5 18:07:39 ART 2013 - ARRIBOS/4-Teatro.El.Fino@reservas.com.ar-quehaces: no existe combinacion SALA-CORREO en salas.mae
-Sat Oct 5 18:07:39 ART 2013 - ARRIBOS/4-Teatro.El.Fino@reservas.com.ar-quehaces: archivo no es ni de reservas ni de invitados
-Sat Oct 5 18:07:39 ART 2013 - ARRIBOS/foo: tipo de archivo invalido
-Sat Oct 5 18:07:39 ART 2013 - Exito al procesar el archivo de invitados ARRIBOS/foo.inv
+Thu Oct 10 13:51:10 ART 2013 - Ciclo Nro 1
+Thu Oct 10 13:51:11 ART 2013 - Exito al procesar el archivo de invitados ARRIBOS/1241.inv
+Thu Oct 10 13:51:11 ART 2013 - Exito al procesar el archivo de invitados ARRIBOS/1242.inv
+Thu Oct 10 13:51:11 ART 2013 - Exito al procesar el archivo de invitados ARRIBOS/1243.inv
+Thu Oct 10 13:51:11 ART 2013 - Exito al procesar el archivo de invitados ARRIBOS/1244.inv
+Thu Oct 10 13:51:11 ART 2013 - Exito al procesar el archivo de invitados ARRIBOS/1245.inv
+Thu Oct 10 13:51:11 ART 2013 - Exito al procesar el archivo de invitados ARRIBOS/1246.inv
+Thu Oct 10 13:51:11 ART 2013 - Exito al procesar el archivo de invitados ARRIBOS/1247.inv
+Thu Oct 10 13:51:11 ART 2013 - Exito al procesar el archivo de reservas ARRIBOS/18-Teatro.Payro@reservas.com.ar-PAyro171013a
+Thu Oct 10 13:51:11 ART 2013 - Exito al procesar el archivo de reservas ARRIBOS/18-Teatro.Payro@reservas.com.ar-PAyro181013a
+Thu Oct 10 13:51:11 ART 2013 - Exito al procesar el archivo de reservas ARRIBOS/18-Teatro.Payro@reservas.com.ar-PAyro251013a
+Thu Oct 10 13:51:11 ART 2013 - Exito al procesar el archivo de reservas ARRIBOS/18-Teatro.Payro@reservas.com.ar-PAyro261013a
+Thu Oct 10 13:51:11 ART 2013 - Exito al procesar el archivo de reservas ARRIBOS/1-LEYER_DEMIAN@GMAIL.COM-EstrenoenelPayro332
+Thu Oct 10 13:51:12 ART 2013 - Exito al procesar el archivo de reservas ARRIBOS/1-LEYER_DEMIAN@GMAIL.COM-EstrenoenelPayro333
+Thu Oct 10 13:51:12 ART 2013 - Exito al procesar el archivo de reservas ARRIBOS/1-LEYER_DEMIAN@GMAIL.COM-EstrenoenelPayro334
+Thu Oct 10 13:51:12 ART 2013 - Exito al procesar el archivo de reservas ARRIBOS/1-LEYER_DEMIAN@GMAIL.COM-EstrenoenelPayro335
+Thu Oct 10 13:51:12 ART 2013 - Exito al procesar el archivo de reservas ARRIBOS/1-MORA_ANTONIO@HOTMAIL.COM-UnaHistoria_del27al33
+Thu Oct 10 13:51:12 ART 2013 - Exito al procesar el archivo de reservas ARRIBOS/1-MORA_ANTONIO@HOTMAIL.COM-UnaHistoria_del34al40
+Thu Oct 10 13:51:12 ART 2013 - Exito al procesar el archivo de reservas ARRIBOS/1-MORA_ANTONIO@HOTMAIL.COM-UnaHistoria_del41al47
+Thu Oct 10 13:51:12 ART 2013 - Exito al procesar el archivo de reservas ARRIBOS/1-MORA_ANTONIO@HOTMAIL.COM-UnaHistoria_del48al54
+Thu Oct 10 13:51:12 ART 2013 - Exito al procesar el archivo de invitados ARRIBOS/334.inv
+Thu Oct 10 13:51:12 ART 2013 - Exito al procesar el archivo de reservas ARRIBOS/3-BEIRO_CLAUDIO@GMAIL.COM-NoeTEA_Fila12
+Thu Oct 10 13:51:12 ART 2013 - Exito al procesar el archivo de reservas ARRIBOS/3-BEIRO_CLAUDIO@GMAIL.COM-NoeTEA_Fila13
+Thu Oct 10 13:51:12 ART 2013 - Exito al procesar el archivo de reservas ARRIBOS/3-BEIRO_CLAUDIO@GMAIL.COM-NoeTEA_Fila14
+Thu Oct 10 13:51:12 ART 2013 - Exito al procesar el archivo de reservas ARRIBOS/6-Teatro.Corrientes.Azul@reservas.com.ar-TCA_3Nov13
+Thu Oct 10 13:51:12 ART 2013 - Exito al procesar el archivo de invitados ARRIBOS/NoeTEA_Fila12.inv
+Thu Oct 10 13:51:12 ART 2013 - Exito al procesar el archivo de invitados ARRIBOS/NoeTEA_Fila13.inv
+Thu Oct 10 13:51:13 ART 2013 - Exito al procesar el archivo de invitados ARRIBOS/NoeTEA_Fila14.inv
+Thu Oct 10 13:51:13 ART 2013 - Exito al procesar el archivo de invitados ARRIBOS/TCA_3Nov13.inv
+Thu Oct 10 13:51:13 ART 2013 - arranco reservar con pid
