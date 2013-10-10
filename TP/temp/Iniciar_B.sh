@@ -69,6 +69,7 @@ function setearVariables {
 		export LOGDIR=`grep "^LOGDIR=" $CONF | sed "s/^LOGDIR=\([^=]*\)=.*$/\1/"`
 		export LOGEXT=`grep "^LOGEXT=" $CONF | sed "s/^LOGEXT=\([^=]*\)=.*$/\1/"`
 		export LOGSIZE=`grep "^LOGSIZE=" $CONF | sed "s/^LOGSIZE=\([^=]*\)=.*$/\1/"`	
+    export LANG="_ES.UTF-8"
 		#Ver si falta alguno mas
 	else
 		return 1
