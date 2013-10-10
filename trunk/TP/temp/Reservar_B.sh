@@ -5,8 +5,8 @@
 # Se dispara automaticamente
 
 function inicializarReservar(){
-        "$BINDIR"Grabar_L.sh "Reservar_B" "Informativo" "Inicio de operacion de Reservar_B"
-        "$BINDIR"Grabar_L.sh "Reservar_B" "Informativo" "Se procesan `ls | wc -l` archivos"
+        "$BINDIR"/Grabar_L.sh "Reservar_B" "Informativo" "Inicio de operacion de Reservar_B"
+        "$BINDIR"/Grabar_L.sh "Reservar_B" "Informativo" "Se procesan `ls | wc -l` archivos"
 }
 
 function cumpleFormato(){
@@ -54,10 +54,11 @@ function distanciaAFechaValida(){
         FECHA_ACTUAL=$(date +%m/%d/%y)
         
         DIF_SEG=`expr $(date --date=$FECHA_RESERVA +%s) - $(date --date=$FECHA_ACTUAL +%s)`
-        #Divido por los segundos en un dia:
-    DIAS=`expr $DIF_SEG / 86400`
-    if [ $DIAS -le 0 ]
-        then
+		#Divido por los segundos en un dia:
+		DIAS=`expr $DIF_SEG / 86400`
+
+		if [ $DIAS -le 0 ]
+		then
                 return 1
         fi
         
@@ -104,59 +105,69 @@ function rechazarReserva(){
 	#Las razones están tabuladas
 	
 	
-	if [ $RAZON == 1 ]
+	if [ $RAZON -eq 1 ]
 	then
 	    MOTIVO="Fecha Invalida"
-	elif [ $RAZON == 2 ]
+	elif [ $RAZON -eq 2 ]
 	then
-		if [ $3 == 1 ]
+		if [ $6 -eq 1 ]
 		then
 			MOTIVO="Reserva Vencida"
-		elif [ $3 == 2 ]
+		elif [ $6 -eq 2 ]
 		then
 			MOTIVO="Reserva Tardia"
 		else
 			MOTIVO="Reserva Anticipada"
 		fi
-	elif [ $RAZON == 3 ]
+	elif [ $RAZON -eq 3 ]
 	then
 		MOTIVO="Hora Invalida"
+	elif [ $RAZON -eq 4 ]
+	then
+		MOTIVO="No existe el evento solicitado"
+	elif [ $RAZON -eq 5 ]
+	then
+		MOTIVO="Falta de Disponibilidad"
 	fi
-	#Luego agrego el resto de los motivos
 	
 	FECHA_GRABACION=`date`
+	
+	
+	SALIDA="$RECH_REGISTRO";"$MOTIVO";"$3";"$4";"$5";"$FECHA_GRABACION";"$USER"
 	
 }
 
 function procesarArchivo(){
-        ARCHIVO_ACTUAL= $1
-        "$BINDIR"Grabar_L.sh "Rerservar_B" "Informativo" "Se procesa el archivo $ARCHIVO_ACTUAL"
+        ARCHIVO_ACTUAL=$1
+        "$BINDIR"/Grabar_L.sh "Reservar_B" "Informativo" "Se procesa el archivo $ARCHIVO_ACTUAL"
         
         #Movemos el archivo a procesar a PROCDIR
-        "$BINDIR"Mover_B $ARCHIVO_ACTUAL $PROCDIR
+        "$BINDIR"/Mover_B $ARCHIVO_ACTUAL $PROCDIR
         MOVIMIENTO_CORRECTO=$?
-        #Ver que devuelve el mover_B
+		#MOVIMIENTO_CORRECTO=0
         if [ $MOVIMIENTO_CORRECTO != 0 ] 
         then
-                "$BINDIR"Grabar_L.sh "Reservar_B" "Error" "Se rechaza el archivo por estar DUPLICADO"
-                Mover_B $ARCHIVO_ACTUAL $RECHDIR
+                "$BINDIR"/Grabar_L.sh "Reservar_B" "Error" "Se rechaza el archivo por estar DUPLICADO"
+                "$BINDIR"/Mover_B $ARCHIVO_ACTUAL $RECHDIR
                 return 1
         fi
 
         #Verificamos si el archivo se encuentra vacio:
         if [ `cat $ARCHIVO_ACTUAL|wc -l` == 0 ]         
         then
-                "$BINDIR"Grabar_L.sh "Reservar_B" "Error" "No se procesa el archivo, por estar vacio"
-                "$BINDIR"Mover_B.sh $ARCHIVO_ACTUAL $RECHDIR            
+                "$BINDIR"/Grabar_L.sh "Reservar_B" "Error" "No se procesa el archivo, por estar vacio"
+                "$BINDIR"/Mover_B.sh $ARCHIVO_ACTUAL $RECHDIR            
                 return 2
         fi
 
-        RESPETAFORMATO= $(cumpleFormato $ARCHIVO_ACTUAL)
+		cumpleFormato $ARCHIVO_ACTUAL
+        RESPETAFORMATO=$?
+        
         if [ $RESPETAFORMATO != 0 ]
         then
-                "$BINDIR"Grabar_L.sh "Reservar_B" "Several Error" "El archivo no respeta el formato, no se lo procesa"
-                "$BINDIR"Mover_B.sh $ARCHIVO_ACTUAL $RECHDIR
-                return
+                "$BINDIR"/Grabar_L.sh "Reservar_B" "Several Error" "El archivo no respeta el formato, no se lo procesa"
+                "$BINDIR"/Mover_B.sh $ARCHIVO_ACTUAL $RECHDIR
+                return 3
         fi
 
         for linea in `cat $ARCHIVO_ACTUAL`
@@ -170,38 +181,80 @@ function procesarArchivo(){
 				CANT_RESERVAS=`echo $linea | cut -d ";" -f 6`
 				SECCION=`echo $linea | cut -d ";" -f 7`
 				
+				#Necesito saber el correo del solicitante:
+				CORREO=`echo $ARCHIVO_ACTUAL | cut -d "-" -f 2`
+				
 				#validar fecha:
-                        #Verificar Fecha Valida. Rechazar (motivo = fecha invalida)
-				fechaValida FECHA_REGISTRO
-				if [ $? != 0 ]
+                #Verificar Fecha Valida. Rechazar (motivo = fecha invalida)
+				fechaValida $FECHA_REGISTRO
+				VALIDEZ=$?
+				if [ $VALIDEZ != 0 ]
 				then
-					rechazarReserva linea 1
+					rechazarReserva $linea 1 "Falta Sala" "Falta Obra" $CORREO
 					continue
 				fi
 				
 				#Comparar fecha actual con la de la funcion. Si la diferencia es menor o igual a 1, se rechaza. (motivo = reserva tardia)
                 #Si la diferencia es mayor a 30, se rechaza (motivo = reserva anticipada)
-				distanciaAFechaValida FECHA_REGISTRO
-				if [ $? != 0 ]
+				distanciaAFechaValida $FECHA_REGISTRO
+				VALIDEZ=$?
+				if [ $VALIDEZ != 0 ]
 				then
-					rechazarReserva linea 2 $?
+					rechazarReserva $linea 2 "Falta Sala" "Falta Obra" $CORREO $VALIDEZ
 					continue
 				fi		
                 
                 #Validar hora:  #Si el formato de hora no es valido, se rechaza (formato HH:MM)
-                horaValida HORA_REGISTRO
-                if [ $? != 0 ]
+                horaValida $HORA_REGISTRO
+                VALIDEZ=$?
+                if [ $VALIDEZ != 0 ]
                 then
-					rechazarReserva linea 3
+					rechazarReserva $linea 3 "Falta Sala" "Falta Obra" $CORREO
+					continue
                 fi
                         
-                #Validar exitencia de evento
+                #Validar exitencia de evento:
+                ID=`echo "$ARCHIVO_ACTUAL"|cut -d- -f 1`
+                ARCH_COMBOS="$PROCDIR"/combos.dis
+                
+                #ESTO DE ACA ESTA MAL. Necesito saber si tengo una obra
+                #O una sala, por ahora asumo obra
+                REG_COMBOS=$ID;$FECHA_REGISTRO;$HORA_REGISTRO
+               
+                EXISTE=`grep "^[^;]*;$REG_COMBOS;" $ARCH_COMBOS | wc -l `
+                if [ $EXISTE == 0 ]
+                then
+					#Aca no deberian ir 'Falta sala' y 'Falta Obra', pero
+					#Despues lo toco
+					rechazarReserva $linea 4 "Falta Sala" "Falta Obra" $CORREO
+					continue
+				fi
+				
+				ID_COMBO=`sed 's%^\([^;]*\);$REG_COMBOS;%\1%`
+								
                 #Validar la disponibilidad
-                                
+                #Si es la primera vez que veo este combo en este ciclo:
+                if [ ! $ID_COMBO in "${!Disponibilidades[@]}" ]
+				then
+					DISP=`sed 's%^[^;]*;$REG_COMBOS;[^;]*;\([^;]*\);%\1%`
+					Disponibilidades=( ["$ID_COMBO"]=$DISP )
+				fi
+                DISPONIBILIDAD=${Disponibilidades["$ID_COMBO"]}
+                
+                if [ $DISPONIBILIDAD < $CANT_RESERVAS ]
+                then
+					rechazarReserva $linea 5 "Falta Sala" "Falta Obra" $CORREO
+                    continue
+                fi
+                
+                NUEVA_DISP=`expr $DISPONIBILIDAD - $CANT_RESERVAS`
+                Disponibilidades=( ["$ID_COMBO"]=$NUEVA_DISP )
+                
         done
         
 }
 
+declare -A Disponibilidades
 
 inicializarReservar
 for archivo in `ls $ACEPDIR`
