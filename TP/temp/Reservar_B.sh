@@ -4,9 +4,26 @@
 # Solo se tiene en cuenta la cantidad de butacas disponibles, no posiciones especificas
 # Se dispara automaticamente
 
+MAEDIR="MAESTROS"
+ARRIDIR="ARRIBOS"
+ACEPDIR="ACEPTADOS"
+RECHDIR="RECHAZADOS"
+REPODIR="INVITADOS"
+LANG="_ES.UTF-8"
+BINDIR="."
+LOGSIZE=300
+export LOGSIZE
+LOGEXT=".log"
+export LOGEXT
+LOGDIR="LOGS"
+export LOGDIR
+
+PROCDIR="PROCESADOS"
+
+
 function inicializarReservar(){
         "$BINDIR"/Grabar_L.sh "Reservar_B" "Informativo" "Inicio de operacion de Reservar_B"
-        "$BINDIR"/Grabar_L.sh "Reservar_B" "Informativo" "Se procesan `ls | wc -l` archivos"
+        "$BINDIR"/Grabar_L.sh "Reservar_B" "Informativo" "Se procesan `ls $ACEPDIR | wc -l` archivos"
 }
 
 function cumpleFormato(){
@@ -22,7 +39,7 @@ function cumpleFormato(){
         
     #Me fijo que tenga todos los campos en todas las lineas, con el formato (mas o menos) adecuado:
         CANT_LINEAS=`wc -l < "$1"`
-        CANT_LINEAS_FORMATO=`grep "^[^;]*;[0-9][0-9]/[0-9][0-9]/[0-9][0-9][0-9][0-9];[0-9][0-9]:[0-9][0-9];[^;]*;[^;]*;[0-9]\+;[^;]*$" "$1" | wc -l`
+        CANT_LINEAS_FORMATO=`grep "^[^;]*;[0-9][0-9]/[0-9][0-9]/[0-9][0-9][0-9][0-9];[0-9][0-9]:[0-9][0-9];[^;]*;[^;]*;[0-9]\+;" "$1" | wc -l`
         
         if [ $CANT_LINEAS == $CANT_LINEAS_FORMATO ]
         then
@@ -133,7 +150,7 @@ function rechazarReserva(){
 	FECHA_GRABACION=`date`
 	
 	
-	SALIDA="$RECH_REGISTRO";"$MOTIVO";"$3";"$5";"$4";"$FECHA_GRABACION";"$USER"
+	SALIDA=`echo $RECH_REGISTRO';'$MOTIVO';'$3';'$5';'$4';'$FECHA_GRABACION';'$USER`
 	echo $SALIDA >> $PROCDIR/reservas.nok 
 	registrosNOK=`expr $registrosNOK + 1`
 }
@@ -141,13 +158,12 @@ function rechazarReserva(){
 function procesarArchivo(){
         ARCHIVO_ACTUAL=$1
         "$BINDIR"/Grabar_L.sh "Reservar_B" "Informativo" "Se procesa el archivo $ARCHIVO_ACTUAL"
-        
-        #Movemos el archivo a procesar a PROCDIR
-        
-        if [ `ls $PROCDIR | grep "^$ARCHIVO_ACTUAL$" | wc -l` ] 
+                
+		#Verifico no haber procesado ya este archivo:
+        if [ `ls $PROCDIR | grep "^$ARCHIVO_ACTUAL$" | wc -l` != 0 ] 
         then
                 "$BINDIR"/Grabar_L.sh "Reservar_B" "Error" "Se rechaza el archivo por estar DUPLICADO"
-                "$BINDIR"/Mover_B $ARCHIVO_ACTUAL $RECHDIR
+                "$BINDIR"/Mover_B.sh $ARCHIVO_ACTUAL $RECHDIR
                 return 1
         fi
 
@@ -193,7 +209,7 @@ function procesarArchivo(){
 					rechazarReserva $linea 1 "Falta Obra" "Falta Sala" $CORREO
 					continue
 				fi
-				
+								
 				#Comparar fecha actual con la de la funcion. Si la diferencia es menor o igual a 1, se rechaza. (motivo = reserva tardia)
                 #Si la diferencia es mayor a 30, se rechaza (motivo = reserva anticipada)
 				distanciaAFechaValida $FECHA_REGISTRO
@@ -212,22 +228,21 @@ function procesarArchivo(){
 					rechazarReserva $linea 3 "Falta Obra" "Falta Sala" $CORREO
 					continue
                 fi
-                        
-                #Validar exitencia de evento:
-                ID=`echo "$ARCHIVO_ACTUAL"|cut -d- -f 1`
+                
+                #Validar exitencia de evento
+                ID=`echo "$ARCHIVO_ACTUAL"|cut -d/ -f 2 | cut -d- -f 1`
                 ARCH_COMBOS="$PROCDIR"/combos.dis
-				
 				if [ `expr $ID % 2` != 0 ]
 				then
 					ID_OBRA=$ID
 					ID_SALA="[^;]*"
-					
 				else
 					ID_OBRA="[^;]*"
 					ID_SALA=$ID
 				fi
-                    
-                EXISTE=`grep "^[^;]*;$ID_OBRA;$FECHA_REGISTRO;$HORA_REGISTRO;$ID_SALA;" $ARCH_COMBOS | wc -l `           
+				
+				
+				EXISTE=`grep "^[^;]*;$ID_OBRA;$FECHA_REGISTRO;$HORA_REGISTRO;$ID_SALA;" $ARCH_COMBOS | wc -l `      
                 if [ $EXISTE == 0 ]
                 then
 					if [ $ID_OBRA == "[^;]*" ]
@@ -239,42 +254,43 @@ function procesarArchivo(){
 					rechazarReserva $linea 4 $ID_OBRA $ID_SALA $CORREO
 					continue
 				fi
-				
-				ID_COMBO=`sed 's%^\([^;]*\);$ID_OBRA;$FECHA_REGISTRO;$HORA_REGISTRO;$ID_SALA;%\1% $ARCH_COMBOS`
-								
+				ID_COMBO=`grep "^[^;]*;$ID_OBRA;$FECHA_REGISTRO;$HORA_REGISTRO;$ID_SALA;" $ARCH_COMBOS | cut -d ";" -f 1`
+										
                 #Validar la disponibilidad
                 #Si es la primera vez que veo este combo en este ciclo:
-                if [ ! $ID_COMBO in "${!Disponibilidades[@]}" ]
+          
+                if [ "${Disponibilidades[$ID_COMBO]}" == "" ]
 				then
-					DISP=`sed 's/^$ID_COMBO;.*;([^;]*\);[^;]*$/\1/' $ARCH_COMBOS`
-					Disponibilidades["$ID_COMBO"]=$DISP
+					DISP=`grep "^$ID_COMBO;" $ARCH_COMBOS | cut -d ";" -f 7`
+					Disponibilidades[$ID_COMBO]=$DISP
 				fi
-                DISPONIBILIDAD=${Disponibilidades["$ID_COMBO"]}
-                ID_OBRA=`sed 's%^$ID_COMBO;\([^;]*\);%\1% $ARCH_COMBOS`
-                ID_SALA=`sed 's%^$ID_COMBO;[^;]*;[^;]*;[^;]*;\([^;]*\);%\1% $ARCH_COMBOS`
+                DISPONIBILIDAD=${Disponibilidades[$ID_COMBO]}
+        
+                ID_OBRA=`grep "^$ID_COMBO;" $ARCH_COMBOS | cut -d ";" -f 2`
+                ID_SALA=`grep "^$ID_COMBO;" $ARCH_COMBOS | cut -d ";" -f 5`
                 
-                if [ $DISPONIBILIDAD < $CANT_RESERVAS ]
+                if [ $DISPONIBILIDAD -lt $CANT_RESERVAS ]
                 then
 					rechazarReserva $linea 5 $ID_OBRA $ID_SALA $CORREO
                     continue
                 fi
                 
                 NUEVA_DISP=`expr $DISPONIBILIDAD - $CANT_RESERVAS`
-                Disponibilidades=( ["$ID_COMBO"]=$NUEVA_DISP )
+                Disponibilidades[$ID_COMBO]=$NUEVA_DISP
 				
 				#A partir de aca el registro ya es valido:
 				#Obtengo el nombre de la obra:
-				NOMBRE_OBRA=`sed 's%^$ID_OBRA;\([^;]*\);%\1%' $MAEDIR/obras.mae`
+				NOMBRE_OBRA=`grep "^$ID_OBRA;" $MAEDIR/obras.mae | cut -d ";" -f 2`
 				#Obtengo el nombre de la sala:
-				NOMBRE_SALA=`sed 's%^$ID_SALA;\([^;]*\);%\1%' $MAEDIR/salas.mae`
+				NOMBRE_SALA=`grep "^$ID_SALA;" $MAEDIR/salas.mae | cut -d ";" -f 2`
 				
 				FECHA=`date`
-				SALIDA="$ID_OBRA";"$NOMBRE_OBRA";"$FECHA_REGISTRO";"$HORA_REGISTRO";"$ID_SALA";"$NOMBRE_SALA";"$CANT_RESERVAS";"$ID_COMBO";"$REF_INTERNA";"$CANT_RESERVAS";"$CORREO";"$FECHA";"$USER"
+				SALIDA=`echo "$ID_OBRA"-"$NOMBRE_OBRA"-"$FECHA_REGISTRO"-"$HORA_REGISTRO"-"$ID_SALA"-"$NOMBRE_SALA"-"$CANT_RESERVAS"-"$ID_COMBO"-"$REF_INTERNA"-"$CANT_RESERVAS"-"$CORREO"-"$FECHA"-"$USER"`
 				echo $SALIDA >> $PROCDIR/reservas.ok 
 				registrosOK=`expr $registrosOK + 1`
         done
         #Muevo el archivo procesado:
-        "$BINDIR"/Mover_B $ARCHIVO_ACTUAL $PROCDIR
+        "$BINDIR"/Mover_B.sh $ARCHIVO_ACTUAL $PROCDIR
 }
 
 declare -A Disponibilidades
@@ -285,7 +301,7 @@ registrosNOK=0
 inicializarReservar
 for archivo in `ls $ACEPDIR`
 do
-        procesarArchivo `echo "$ACEPDIR"$archivo`
+        procesarArchivo `echo "$ACEPDIR"/$archivo`
 done
 
 #Verificacion:
@@ -299,14 +315,13 @@ fi
 for ID_COMBO in "${!Disponibilidades[@]}"
 do
 	#Busco la linea que estoy actualizando:
-	REG_INICIO=`sed 's/^\($ID_COMBO;[^;]*;[^;]*;[^;]*;[^;]*;[^;]*\);[^;]*;[^;]*$/\1/' "$PROCDIR"/combos.dis`
-	REG_FIN=`sed 's/^$ID_COMBO;.*;\([^;]*\)$/\1/' "$PROCDIR"/combos.dis`
+	REG_INICIO=`grep "^$ID_COMBO;" "$PROCDIR"/combos.dis | sed 's/\(.*\);[^;]*;[^;]*$/\1/'`
+	REG_FIN=`grep "^$ID_COMBO;" "$PROCDIR"/combos.dis | sed 's/.*;[^;]*;\([^;]*\)$/\1/'`
 		
 	TEMPORAL="$PROCDIR"/combosTEMP.dis
 	#Me quedo con todas las lineas excepto con la que estoy actualizando
-	sed '/^$ID_COMBO;/d' "$PROCDIR"/combos.dis > $TEMPORAL
-	
-	NUEVO_REG=`echo "$REG_INICIO";"${Disponibilidades["$ID_COMBO"]}";"$REG_FIN"`
+	sed "/^$ID_COMBO/d" "$PROCDIR"/combos.dis > $TEMPORAL
+	NUEVO_REG=`echo "$REG_INICIO"';'"${Disponibilidades[$ID_COMBO]}"';'$REG_FIN`
 	
 	echo $NUEVO_REG >> "$PROCDIR"/combosTEMP.dis
 	cat "$PROCDIR"/combosTEMP.dis > "$PROCDIR"/combos.dis
