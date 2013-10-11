@@ -330,3 +330,5 @@ do
 done
 
 "$BINDIR"/Grabar_L.sh "Reservar_B" "Informativo" "Fin de Reservar_B"
+
+exit 0
