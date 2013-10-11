@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # archivo de configuracion, es una ruta fija segun el enunciado
-CONF="../conf/Instalar_TP.conf" # TODO: revisar este path
+CONF="../conf/Instalar_TP.conf" # TODO: revisar este path.
+#TODO: yo asumo que estoy en    foo/bin/Iniciar_B.sh y el la conf en   foo/conf/Instalar_TP.conf
 
 function verificarInstalacion {
 	#TODO
@@ -15,7 +16,7 @@ function verificarInstalacion {
 # 	0 : si el ambiente esta limpio
 #	1 : si el ambiente ya habia sido inicializado
 function verificarAmbiente {
-#	if [ "$PATH" != "" ] ; then
+#	if [ "$PATH" != "" ] ; then  # TODO: PATH siempre estaria inicializado en... algo (?)
 #		return 1
 #	fi
 	if [ "$GRUPO" != "" ] ; then
@@ -69,8 +70,8 @@ function setearVariables {
 		export LOGDIR=`grep "^LOGDIR=" $CONF | sed "s/^LOGDIR=\([^=]*\)=.*$/\1/"`
 		export LOGEXT=`grep "^LOGEXT=" $CONF | sed "s/^LOGEXT=\([^=]*\)=.*$/\1/"`
 		export LOGSIZE=`grep "^LOGSIZE=" $CONF | sed "s/^LOGSIZE=\([^=]*\)=.*$/\1/"`	
-    export LANG="_ES.UTF-8"
-		#Ver si falta alguno mas
+		export LANG="_ES.UTF-8"
+		#TODO: Ver si falta alguno mas
 	else
 		return 1
 	fi
@@ -82,8 +83,8 @@ function setearVariables {
 
 # Otorga permisos de ejecucion a los archivos ejecutables
 function otorgarPermisos {
-	# TODO: ver donde se encontraria Recibir_B.sh respecto de Iniciar_B.sh. Si estan en mismo directorio, es así:
-	# chmod +x Recibir_B.sh
+	# TODO: asumo que Recibir_B.sh y Iniciar_B.sh estan en el mismo nivel:
+	chmod +x Recibir_B.sh
 	return 0
 }
 
@@ -151,52 +152,84 @@ function solicitarInicioRecibir {
 
 # Verificamos que la instalacion este completa
 verificarInstalacion
+./Grabar_L.sh "Iniciar_B" "Informativo" "Verificando la instalacion del paquete"
 if [ $? -eq 1 ] ; then
 	echo "No se puede iniciar debido a una instalación incompleta o inexistente."
 	echo "Por favor instale el paquete mediante el comando Instalar_TP."
 	./Grabar_L.sh "Iniciar_B" "SEVERAL ERROR" "La instalacion no se ha completado"
-	#./Grabar_L.sh "Iniciar_B" "Informativo" "Componentes faltantes: " #TODO listar lo que falte
+	./Grabar_L.sh "Iniciar_B" "SEVERAL ERROR" "Componentes faltantes: ..................." #TODO listar lo que falte
+	./Grabar_L.sh "Iniciar_B" "Informativo" "Fin de Ejecución"
 	exit 1
 else
-	# TODO: grabar en log que la instalacion estaba bien
+	./Grabar_L.sh "Iniciar_B" "Informativo" "Se encuentra todo instalado."
 fi
 
 # Veo si ya había sido inicializado el ambiente
 verificarAmbiente
 if [ $? -eq 1 ] ; then
 	echo "Ambiente ya inicializado. Si desea reiniciar, termine su sesión e ingrese nuevamente."
-	#./Grabar_L.sh "Iniciar_B" "Error" "Intento de iniciar entorno ya inicializado"
-	#./Grabar_L.sh "Iniciar_B" "Informativo" "Estado de las variables de entorno: GRUPO=$GRUPO, ARRIDIR=$ARRIDIR, RECHDIR=$RECHDIR, BINDIR=$BINDIR, MAEDIR=$MAEDIR, REPODIR=$REPODIR, LOGDIR=$LOGDIR, LOGEXT=$LOGEXT, LOGSIZE=$LOGSIZE"
+	./Grabar_L.sh "Iniciar_B" "Error" "Intento de inicializar ambiente ya inicializado"
+	./Grabar_L.sh "Iniciar_B" "Error" "Estado del ambiente: GRUPO=$GRUPO, ARRIDIR=$ARRIDIR, RECHDIR=$RECHDIR, BINDIR=$BINDIR, MAEDIR=$MAEDIR, REPODIR=$REPODIR, LOGDIR=$LOGDIR, LOGEXT=$LOGEXT, LOGSIZE=$LOGSIZE"
+	./Grabar_L.sh "Iniciar_B" "Informativo" "Fin de Ejecución"
 	exit 1 
 else
-	# TODO: grabar en log que el ambiente estaba bien
+	./Grabar_L.sh "Iniciar_B" "Informativo" "El ambiente se encuentra limpio"
 fi
 
 setearVariables
 # TODO: grabar en log que se setearon las variables, y en que estado
+./Grabar_L.sh "Iniciar_B" "Informativo" "Se setearon las variables de entorno."
+./Grabar_L.sh "Iniciar_B" "Informativo" "Estado del ambiente: GRUPO=$GRUPO, ARRIDIR=$ARRIDIR, RECHDIR=$RECHDIR, BINDIR=$BINDIR, MAEDIR=$MAEDIR, REPODIR=$REPODIR, LOGDIR=$LOGDIR, LOGEXT=$LOGEXT, LOGSIZE=$LOGSIZE"
 
 otorgarPermisos # A Recibir_B.sh
-# TODO: grabar en log que se otorgaron permisos
+./Grabar_L.sh "Iniciar_B" "Informativo" "Se otorgaron permisos a Recibir_B.sh"
 
 solicitarInicioRecibir
+# Si solicito iniciar Recibir_B:
 if [ $? -eq 0 ] ; then
+	# Veo si ya habia uno ejecutando
 	ejecutandoRecibirB
+	# Si no se esta ejecutando...
 	if [ $?  -eq 0 ] ; then
-		# comenzar el RECIBIR_B!!!
+		# Lo iniciamos:
+		./Grabar_L.sh "Iniciar_B" "Informativo" "El usuario dicidio ejecutar Recibir_B.sh"
+		./Start_D.sh # comenzar el Recibir_B.sh como demonio
 		PIDRECIBIRB=`ps | grep "Recibir_B.sh" | head -1 | awk '{print $1 }'`
-		# TODO: grabar en log que se inicio el recibir_b
+		
+		# Si por alguna razon no se pudo iniciar el demonio...
+		if [ "$PIDRECIBIRB" == ""] ; then
+			./Grabar_L.sh "Iniciar_B" "Error" "Por alguna razon no se pudo correr el demonio para Recibir_B.sh"
+			echo "No se pudo ejecutar el demonio Recibir_B"
+			
+		# Si lo iniciamos exitosamente...
+		else
+			./Grabar_L.sh "Iniciar_B" "Informativo" "El proceso Recibir_B.sh se inicio. PID: $PIDRECIBIRB"
+			echo "Se inicio el demonio Recibir_B"
+		fi
+		
+	# Si el demonio ya existia...
 	else
 		echo "El proceso Recibir_B ya estaba siendo ejecutando anteriormente bajo el PID:$PIDRECIBIRB?"
-		# TODO: grabar en log que el recibir_b ya estaba
+		./Grabar_L.sh "Iniciar_B" "Warning" "El proceso Recibir_B.sh ya estaba siendo ejecutado. PID: $PIDRECIBIRB"
 	fi
-	explicarStop
+	
+	# Si por alguna razon no se pudo iniciar el demonio...
+	if [ "$PIDRECIBIRB" == ""] ; then
+		explicarStart
+		
+	# Si lo pudimos iniciar o estaba iniciado... 
+	else
+		explicarStop
+	fi
+	
+# Si decididio no iniciar el Recibir_B:
 else
 	explicarStart
-	# TODO: grabar en log que el usuario no quiso iniciarlo
+	./Grabar_L.sh "Iniciar_B" "Informativo" "El usuario decidio no ejecutar Recibir_B.sh"
 fi
 
 imprimirInformacion
 
-#TODO: cerrar archivo de log...
+./Grabar_L.sh "Iniciar_B" "Informativo" "Fin de Ejecución"
 
 exit 0
