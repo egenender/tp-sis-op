@@ -209,10 +209,15 @@ do
 				#~ Si arranca correctamente se debe mostrar por pantalla el process id de Reservar_B
 				#~ Si da algún tipo de error se debe mostrar por pantalla el mensaje explicativo
 				
-				# $BINDIR/Reservar_B.sh &
+				$BINDIR/Reservar_B.sh &
+				
+				if [ $? -ne 0 ]; then
+					echo "Error al ejecutar Reservar_B.sh "
+				else
+					
+					echo "Reservar_B.sh se ejecuto exitosamente con pid $!"
 
-				echo "$!"
-				$BINDIR/Grabar_L.sh "Recibir_B" "arranco reservar con pid $! "
+				fi
 
 
 				
