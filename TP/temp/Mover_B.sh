@@ -24,7 +24,7 @@ function existeDestino {
 		# ruta destino no existe
 		return 1
 	fi
-  return 0
+	return 0
 }
 
 # Verifica si existe el destino es el mismo que el origen.
@@ -35,7 +35,7 @@ function destinoEsOrigen {
 		# se quiere mover al mismo lugar
 		return 1
 	fi
-  return 0
+	return 0
 }
 
 # Verifica si ya existe un archivo en el destino con el mismo nombre
@@ -78,22 +78,23 @@ function verificarDuplicado {
 	fi
    
 	RUTA_DESTINO="$RUTA_DESTINO/dup"
-  return 1 # como duplique, sale con 1
+	return 1 # como duplique, sale con 1
 }
 
 # Funcion principal del script.
 #
 # Parametros:
-#   1 : origen				      (ej: /origen/archivo.txt)
-#	2 : destino				     (ej: /destino)
+#   1 : origen				(ej: origen/archivo.txt)
+#	2 : destino				(ej: destino)
 #	3 : comando que invoca	(optativo)
 #
 # Devuelve:
 #	0 : si movio el archivo al destino
 #	1 : si movio el archivo al destino pero con carpeta dup (duplicado)
-#  2 : si no existe el origen (no mueve)
-#  3 : si no existe el destino (no mueve)
-#  4 : si el destino es el mismo que el origen
+#   2 : si no existe el origen (no mueve)
+#   3 : si no existe el destino (no mueve)
+#   4 : si el destino es el mismo que el origen
+#   5 : si se uso mal este comando
 #  
 
 RUTA_ORIGEN=$1
@@ -103,22 +104,30 @@ COMANDO=$3
 ARCHIVO_ORIGEN=`basename $RUTA_ORIGEN`	# Obtengo nombre del archivo
 ARCHIVO_DESTINO=$ARCHIVO_ORIGEN			# El nombre en el destino (puede llegar a cambiar)
 	
-# Validaciones...
-# TODO: Validar que se hayan pasado los parametros!
+# Verifico que no me hayan pasado una mala cantidad de parametros
+if [ $# -lt 2 ] ; then
+	echo "No se pasaron suficientes parametros"
+	echo "Uso: ./Mover_B.sh <rutaOrigen/archivo> <rutaDestino> <comando invocante (opcional)>"
+	exit 5
+elif [ $# -gt 3 ] ; then
+	echo "Se pasaron demasiados parametros"
+	echo "Uso: ./Mover_B.sh <rutaOrigen/archivo> <rutaDestino> <comando invocante (opcional)>"
+	exit 5
+fi
 
 existeOrigen
 if [ $? == 1 ] ; then
-  exit 2 # No existe Origen
+	exit 2 # No existe Origen
 fi
 
 existeDestino
 if [ $? == 1 ] ; then
-  exit 3 # No existe Destino
+	exit 3 # No existe Destino
 fi
 
 destinoEsOrigen
 if [ $? == 1 ] ; then
-  exit 4 # Mismo destino que origen
+	exit 4 # Mismo destino que origen
 fi
 
 verificarDuplicado # va a modificar RUTA_DESTINO y el ARCHIVO_DESTINO (en caso de ser necesario)
