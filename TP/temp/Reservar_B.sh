@@ -184,7 +184,23 @@ function procesarArchivo(){
                 "$BINDIR"/Mover_B.sh $ARCHIVO_ACTUAL $RECHDIR
                 return 3
         fi
+        
+        #Necesito saber el correo del solicitante:
+        CORREO=`echo $ARCHIVO_ACTUAL | cut -d "-" -f 2`
+		ID=`echo "$ARCHIVO_ACTUAL"|cut -d/ -f 2 | cut -d- -f 1`
+		
+		#Validar exitencia de evento
+        ARCH_COMBOS="$PROCDIR"/combos.dis
+        if [ `expr $ID % 2` != 0 ]
+        then
+			ID_OBRA=$ID
+			ID_SALA="[^;]*"
+        else
+			ID_OBRA="[^;]*"
+			ID_SALA=$ID
+		fi
 
+		#Proceso el archivo, linea a linea (registro a registro):
         for linea in `cat $ARCHIVO_ACTUAL`
         do      
                 registrosTOT=`expr $registrosTOT + 1`
@@ -197,8 +213,7 @@ function procesarArchivo(){
                 CANT_RESERVAS=`echo $linea | cut -d ";" -f 6`
                 SECCION=`echo $linea | cut -d ";" -f 7`
                                 
-                #Necesito saber el correo del solicitante:
-                CORREO=`echo $ARCHIVO_ACTUAL | cut -d "-" -f 2`
+                
                                 
                 #validar fecha:
                 #Verificar Fecha Valida. Rechazar (motivo = fecha invalida)
@@ -228,24 +243,11 @@ function procesarArchivo(){
 					rechazarReserva $linea 3 "Falta Obra" "Falta Sala" $CORREO
                     continue
                 fi
-                
-                #Validar exitencia de evento
-                ID=`echo "$ARCHIVO_ACTUAL"|cut -d/ -f 2 | cut -d- -f 1`
-                ARCH_COMBOS="$PROCDIR"/combos.dis
-                if [ `expr $ID % 2` != 0 ]
-                then
-					ID_OBRA=$ID
-                    ID_SALA="[^;]*"
-                else
-					ID_OBRA="[^;]*"
-                    ID_SALA=$ID
-                fi
-                                
-                                
+                                               
                 EXISTE=`grep "^[^;]*;$ID_OBRA;$FECHA_REGISTRO;$HORA_REGISTRO;$ID_SALA;" $ARCH_COMBOS | wc -l `      
                 if [ $EXISTE == 0 ]
                 then
-					if [ $ID_OBRA == "[^;]*" ]
+					if [ "$ID_OBRA" == "[^;]*" ]
                     then
 						ID_OBRA="Falta Obra"
                     else
