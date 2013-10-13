@@ -287,7 +287,7 @@ function procesarArchivo(){
                 NOMBRE_SALA=`grep "^$ID_SALA;" $MAEDIR/salas.mae | cut -d ";" -f 2`
                               
                 FECHA=`date`
-                SALIDA=`echo "$ID_OBRA"-"$NOMBRE_OBRA"-"$FECHA_REGISTRO"-"$HORA_REGISTRO"-"$ID_SALA"-"$NOMBRE_SALA"-"$CANT_RESERVAS"-"$ID_COMBO"-"$REF_INTERNA"-"$CANT_RESERVAS"-"$CORREO"-"$FECHA"-"$USER"`
+                SALIDA=`echo "$ID_OBRA"';'"$NOMBRE_OBRA"';'"$FECHA_REGISTRO"';'"$HORA_REGISTRO"';'"$ID_SALA"';'"$NOMBRE_SALA"';'"$CANT_RESERVAS"';'"$ID_COMBO"';'"$REF_INTERNA"';'"$CANT_RESERVAS"';'"$CORREO"';'"$FECHA"';'"$USER"`
                 echo $SALIDA >> $PROCDIR/reservas.ok 
                 registrosOK=`expr $registrosOK + 1`
         done
