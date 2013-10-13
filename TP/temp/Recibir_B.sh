@@ -23,7 +23,7 @@ function esDeSala(){
 	
 	filename=$(basename "$1")
 	
-	if [ `echo "$filename" | grep "[0-9]\+\-[^-]+@[^-]+\-[^- ]*$" | wc -l` == 1 ]
+	if [ `echo "$filename" | grep "[0-9]\+\-[^-]*@[^-]*\-[^- ]*$" | wc -l` == 1 ]
 	then
 
 		SALA=`echo "$filename"|cut -d- -f 1`
@@ -62,7 +62,7 @@ function esDeProduccion(){
 		
 	filename=$(basename "$1")
 	
-	if [ `echo "$filename" | grep "[0-9]\+\-[^-]+@[^-]+\-[^- ]*$" | wc -l` == 1 ]
+	if [ `echo "$filename" | grep "[0-9]\+\-[^-]*@[^-]*\-[^- ]*$" | wc -l` == 1 ]
 	then
 
 		OBRA=`echo "$filename"|cut -d- -f 1`
