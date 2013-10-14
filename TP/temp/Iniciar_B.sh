@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # archivo de configuracion, es una ruta fija segun el enunciado
-CONF="../conf/Instalar_TP.conf" # TODO: revisar este path.
+CONF="../conf/Instalar_TP.conf" # TODO: esto funcionaria si al hacer .. vuelvo a GRUPO
 #TODO: yo asumo que estoy en    foo/bin/Iniciar_B.sh y el la conf en   foo/conf/Instalar_TP.conf
 
 function verificarInstalacion {
@@ -76,7 +76,9 @@ function setearVariables {
 		return 1
 	fi
 	
-	#export PATH=$PATH:$GRUPO:$BINDIR"/":$REPODIR"/"   #TODO: no se muy bien como se pone el PATH
+	# En la variable PATH van los directorios donde buscar ejecutables. En nuestro caso
+	# seria: GRUPO/BINDIR
+	export PATH=$PATH:$GRUPO"/"$BINDIR"/"
 	return 0
 }
 
@@ -111,11 +113,11 @@ function explicarStart {
 function imprimirInformacion {
 	echo "TP SO7508 Segundo Cuatrimestre 2013. Tema B Copyright © Grupo 02"
 	echo "Librería del Sistema:                      $CONFDIR."
-	#ls $CONFDIR/
+	#ls ..$CONFDIR/
 	echo "Ejecutables:                               $BINDIR."
-	#ls $BINDIR/
+	ls # Aca listamos la carpeta BINDIR, como Iniciar esta en BINDIR, es simplemente un ls.
 	echo "Archivos maestros:                         $MAEDIR"
-	#ls $MAEDIR/
+	ls ..$MAEDIR/  # Asumo que haciendo un simple .. vuelvo a GRUPO, y luego de ahí a MAEDIR...
 	echo "Directorio de arribo de archivos externos: $ARRIDIR"
 	echo "Archivos externos aceptados:               $ACEPDIR"
 	echo "Archivos externos rechazados:              $RECHDIR"
