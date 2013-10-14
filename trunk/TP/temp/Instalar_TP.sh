@@ -11,15 +11,21 @@ function finalizarInstalacion(){
 
 	rm -f *.auxINST
 	./Grabar_L.sh "Instalar_TP" "Informativo" "$1"
-	
+	FAIL='\033[91m'
+	ENDC='\033[0m'
+	OKGREEN='\033[92m'
+	echo ""
+
 	if [ "$2" == "OK" ]; then
-		echo ""
+		echo -e $OKGREEN
 		echo "La Instalacion ha concluido Satisfactoriamente."
+		echo -e $ENDC
 		echo ""
 		exit 0
 	else
-		echo ""
+		echo -e $FAIL
 		echo "INSTALACION ABORTADA"
+		echo -e $ENDC
 		echo ""
 		exit 1
 	fi
@@ -84,36 +90,6 @@ function chequeoPerl(){
 		abortarPorNoPerl	
 	fi
 
-}
-
-function modificarVarsPorFallo(){
-	if [ $FALLOBINDIR -eq 1 ]; then
-		BINDIR="bin"
-	fi
-	if [ $FALLOMAEDIR -eq 1 ]; then
-		MAEDIR="mae"
-	fi
-	if [ $FALLOARRIDIR -eq 1 ]; then
-		ARRIDIR="arribos"
-	fi
-	if [ $FALLOACEPDIR -eq 1 ]; then
-		ACEPDIR="aceptados"
-	fi
-	if [ $FALLORECHDIR -eq 1 ]; then
-		RECHDIR="rechazados"
-	fi
-	if [ $FALLOREPODIR -eq 1 ]; then
-		REPODIR="listados"
-	fi
-	if [ $FALLOPROCDIR -eq 1 ]; then
-		PROCDIR="procesados"
-	fi
-	if [ $FALLOLOGDIR -eq 1 ]; then
-		LOGDIR="log"
-	fi
-	if [ $FALLODATASIZE -eq 1 ]; then
-		DATASIZE=100
-	fi
 }
 
 #Se setean los parametros con los valores default
@@ -257,32 +233,10 @@ function definirExtensionArchivos(){
 	fi
 }
 
-function obtenerEspacio(){	
-	#obtener espacio que le queda en Kb
-	#que hago, ARRIDIR no existe todavia
-	#df $ARRIDIR > espacio.auxINST
-	df $CONFDIR > espacio.auxINST
-	
-	#obtengo la linea donde se encuentran los datos (ultima linea del archivo)
-	linea=`tail -1 espacio.auxINST`
-	
-	i=0
-	for c in $linea; do
-		i=`expr 1 + $i`
-		#El cuarto valor corresponde al tamaño disponible
-		if [ $i -eq 4 ]; then
-			TAM=$c
-		fi
-	done
-	
-	#Como el valor esta en Kb divido para tenerlo en Mb
-	TAM=$(echo "$TAM / 1024" |bc -l)
-}
-
 #Chequea el espacio disponible en la direccion ARRIDIR
 #Si es suficiente continua, sino consulta al usuario
 function chequearEspacioARRIDIR(){
-	obtenerEspacio
+	TAM=`./ObtenerEspacio.sh $ARRIDIR`
 	#Si TAM es menor que DATASIZE comp es 1
 	comp=`echo "$DATASIZE > $TAM" | bc`
 	HAY_ESPACIO="SI"
@@ -300,14 +254,14 @@ function chequearEspacioARRIDIR(){
 #verifica el espacio en disco y de no ser suficiente pregunta al usuario
 #si desea redefinirlo, hacer espacio en disco y volver a chequear, o abortar
 #la instalacion
-function verificarEspacio(){
+function consultarUsuarioEspacio(){
 	chequearEspacioARRIDIR
 
 	if [ "$HAY_ESPACIO" == "NO" ]; then
 		entradaSiNo "Desea redefinir el valor de Espacio minimo?"
 		if [ "${RTA^^}" == "SI" ]; then
 			./Grabar_L.sh "Instalar_TP" "Informativo" "Usuario ha decidido redefinir el valor de Espacio minimo."
-			datasize
+			redefinirDatasize
 		else
 			./Grabar_L.sh "Instalar_TP" "Informativo" "El Usuario ha decidido no redefinir el Espacio mínimo"
 			entradaSiNo "Desea abortar la instalacion?"
@@ -328,12 +282,12 @@ function continuaEspacio(){
 	echo "Libere espacio en disco."
 	echo "Presione Enter para continuar"
 	read basura
-	verificarEspacio
+	consultarUsuarioEspacio
 }
 
-function datasize(){
+function redefinirDatasize(){
 	definirDatasize
-	verificarEspacio
+	consultarUsuarioEspacio
 }
 
 function definirParametros(){
@@ -342,7 +296,7 @@ function definirParametros(){
 	definirMAEDIR
 	definirARRIDIR
 
-	datasize
+	redefinirDatasize
 	
 	definirACEPDIR
 	definirRECHDIR
@@ -355,93 +309,9 @@ function definirParametros(){
 	definirLOGSIZE
 }
 
-function listarArchivos(){
-	if [ -d "$1" ]; then
-		msj=`ls $1`
-		if [ "$msj" == "" ]; then
-			echo "Directorio Vacio"
-			./Grabar_L.sh "Instalar_TP" "Informativo" "Directorio "$2" vacio."
-		else
-			echo "Archivos:"
-			./Grabar_L.sh "Instalar_TP" "Informativo" "Archivos:"
-			echo $msj
-			./Grabar_L.sh "Instalar_TP" "Informativo" "$msj"
-		fi
-	else
-		echo "No existe el directorio."
-		./Grabar_L.sh "Instalar_TP" "Informativo" "Directorio "$2" no existe"
-	fi
-}
-
-#si se desea ademas que liste el contenido de las carpetas, pasar parametro = 1
-function imprimirSusRespuestas(){
-	clear #Limpio la pantalla
-	
-	version="TP SO7508 Segundo Cuatrimestre 2013. Tema B Copyright © Grupo 02"
-	echo $version
-	./Grabar_L.sh "Instalar_TP" "Informativo" "$version"
-	
-	libreria="Librería del Sistema: "$CONFDIR
-	echo $libreria
-	./Grabar_L.sh "Instalar_TP" "Informativo" "$libreria"
-	if [ $1 -eq 1 ]; then
-		listarArchivos $CONFDIR
-	fi
-	
-	ejec="Ejecutables: "$BINDIR
-	echo $ejec
-	./Grabar_L.sh "Instalar_TP" "Informativo" "$ejec"
-	if [ $1 -eq 1 ]; then
-		listarArchivos $BINDIR
-	fi
-	
-	maestr="Archivos maestros: "$MAEDIR
-	echo $maestr
-	./Grabar_L.sh "Instalar_TP" "Informativo" "$maestr"
-	if [ $1 -eq 1 ]; then
-		listarArchivos $MAEDIR
-	fi
-	
-	extern="Directorio de arribo de archivos externos: "$ARRIDIR
-	echo $extern
-	./Grabar_L.sh "Instalar_TP" "Informativo" "$extern"
-	
-	tam="Espacio mínimo libre para arribos: "$DATASIZE" Mb"
-	echo $tam
-	./Grabar_L.sh "Instalar_TP" "Informativo" "$tam"
-	
-	aceptado="Archivos externos aceptados: "$ACEPDIR
-	echo $aceptado
-	./Grabar_L.sh "Instalar_TP" "Informativo" "$aceptado"
-	
-	rechazado="Archivos externos rechazados: "$RECHDIR
-	echo $rechazado
-	./Grabar_L.sh "Instalar_TP" "Informativo" "$rechazado"
-	
-	reporte="Reportes de salida: "$REPODIR
-	echo $reporte
-	
-	proc="Archivos procesados: "$PROCDIR
-	echo $proc
-	./Grabar_L.sh "Instalar_TP" "Informativo" "$proc"
-	
-	logs="Logs de auditoria del Sistema: "$LOGDIR"/<comando>."$LOGEXT
-	echo $logs
-	./Grabar_L.sh "Instalar_TP" "Informativo" "$logs"
-	
-	tamMax="Tamaño máximo para los archivos de log del sistema: "$LOGSIZE" Kb"
-	echo $tamMax
-	./Grabar_L.sh "Instalar_TP" "Informativo" "$tamMax"
-	
-	estado="Estado de la instalacion: "$2
-	echo $estado
-	./Grabar_L.sh "Instalar_TP" "Informativo" "$estado"
-	
-}
-
 #Pregunta al usuario si acepta las condiciones de instalacion
 #Si no las acepta Aborta la instalacion
-function verificarCondicionesDeInstalacion(){
+function preguntarCondicionesDeInstalacion(){
 	./Grabar_L.sh "Instalar_TP" "Informativo" "Inicio de Instalación completa"
 	echo "TP SO7508 Segundo Cuatrimestre 2013. Tema B Copyright © Grupo 02"
 	echo "A T E N C I O N: Al instalar TP SO7508 Segundo Cuatrimestre 2013 Ud. expresa aceptar los términos y Condiciones del 'ACUERDO DE LICENCIA DESOFTWARE' incluido en este paquete."	
@@ -469,7 +339,8 @@ function definirParametrosPorUsuario(){
 	RTA="NO"
 	while [ "${RTA^^}" == "NO" ]; do
 		definirParametros
-		imprimirSusRespuestas 0 "LISTA"
+		exportarVariables
+		./imprimirSusRespuestas.sh 0 "LISTA" "Instalar_TP"
 		entradaSiNo "Es correcta la configuracion?"
 		if [ "${RTA^^}" == "NO" ]; then
 			./Grabar_L.sh "Instalar_TP" "Informativo" "Configuracion rechazada por el usuario"
@@ -500,7 +371,9 @@ function moverArchivos(){
 #	2 : destino				(ej: /destino)
 #	3 : comando que invoca	(optativo)
 	#./Mover_B.sh 
-	echo "Falta Implementar moverArchivos"
+	echo "Revisar Implementar moverArchivos"
+	cp *.sh $BINDIR
+	cp MAESTROS/*.mae $MAEDIR
 }
 
 #A partir del archivo de configuraciones, obtiene el valor del
@@ -508,52 +381,12 @@ function moverArchivos(){
 #parametro 1: registro buscado
 function obtenerValorExistente(){
 	re="^$1"
-	linea_original=`grep "$re" < $ARCHCONF`
-	ind=`expr index "$linea_original" '='`
-	linea_aux=${linea_original:$ind}
-	ind2=`expr index "$linea_aux" '='`
-	VALOR_EN_ARCH=${linea_aux:0:$ind2-1}
-}
-
-#Escribe la linea del registro actualizado en el archivo temporal
-#Si el registro no cambio, escribe la linea original
-#Parametro 1: nombre del registro 
-#Parametro 2: variable
-function actualizarRegistroExistente(){
-	obtenerValorExistente $1
-	if ! [ $VALOR_EN_ARCH == $2 ]; then
-		echo $1"="$2"="$(whoami)"="`date` >> $CONFTEMP
-		mensaje="El valor de "$1" fue actualizado a: "$2
-		./Grabar_L.sh "Instalar_TP" "Informativo" "$mensaje"
-	else
-		echo $linea_original >> $CONFTEMP
-	fi
-}
-
-#Actualiza el archivo de configuraciones con los nuevos valores
-#de los parametros. Si el valor del parametro no cambia, tampoco
-#lo hace el registro
-#Crea un archivo auxiliar
-function actualizarConfiguracionExistente(){
-	CONFTEMP=$ARCHCONF".auxINST"
-	> $CONFTEMP #Crea el archivo vacio
-	
-	actualizarRegistroExistente "GRUPO" $GRUPO
-	actualizarRegistroExistente "CONFDIR" $CONFDIR
-	actualizarRegistroExistente "BINDIR" $BINDIR
-	actualizarRegistroExistente "MAEDIR" $MAEDIR
-	actualizarRegistroExistente "ARRIDIR" $ARRIDIR
-	actualizarRegistroExistente "ACEPDIR" $ACEPDIR
-	actualizarRegistroExistente "RECHDIR" $RECHDIR
-	actualizarRegistroExistente "REPODIR" $REPODIR
-	actualizarRegistroExistente "PROCDIR" $PROCDIR
-	actualizarRegistroExistente "LOGDIR" $LOGDIR
-	actualizarRegistroExistente "LOGEXT" $LOGEXT
-	actualizarRegistroExistente "LOGSIZE" $LOGSIZE
-	actualizarRegistroExistente "DATASIZE" $DATASIZE
-	
-	#elimina la configuracion anterior
-	mv $CONFTEMP $ARCHCONF
+	linea_original=`grep "$re" < $2`
+	#ind=`expr index "$linea_original" '='`
+	#linea_aux=${linea_original:$ind}
+	#ind2=`expr index "$linea_aux" '='`
+	#VALOR_EN_ARCH=${linea_aux:0:$ind2-1}
+	VALOR_EN_ARCH=`echo "$linea_original" | cut -d "=" -f 2`
 }
 
 #Escribe un registro en ARCHCONF
@@ -588,7 +421,7 @@ function actualizarConfiguracionCompleto(){
 #Proceso de instalacion
 function instalar(){
 	
-	verificarCondicionesDeInstalacion
+	preguntarCondicionesDeInstalacion
 	
 	chequeoPerl
 	
@@ -608,27 +441,27 @@ function instalar(){
 }
 
 function obtenerValoresExistentes(){
-	obtenerValorExistente "BINDIR"
+	obtenerValorExistente "BINDIR" "$1"
 	BINDIR=$VALOR_EN_ARCH
-	obtenerValorExistente "MAEDIR"
+	obtenerValorExistente "MAEDIR" "$1"
 	MAEDIR=$VALOR_EN_ARCH
-	obtenerValorExistente "ARRIDIR"
+	obtenerValorExistente "ARRIDIR" "$1"
 	ARRIDIR=$VALOR_EN_ARCH
-	obtenerValorExistente "ACEPDIR"
+	obtenerValorExistente "ACEPDIR" "$1"
 	ACEPDIR=$VALOR_EN_ARCH
-	obtenerValorExistente "RECHDIR"
+	obtenerValorExistente "RECHDIR" "$1"
 	RECHDIR=$VALOR_EN_ARCH
-	obtenerValorExistente "REPODIR"
+	obtenerValorExistente "REPODIR" "$1"
 	REPODIR=$VALOR_EN_ARCH
-	obtenerValorExistente "PROCDIR"
+	obtenerValorExistente "PROCDIR" "$1"
 	PROCDIR=$VALOR_EN_ARCH
-	obtenerValorExistente "LOGDIR"
+	obtenerValorExistente "LOGDIR" "$1"
 	LOGDIR=$VALOR_EN_ARCH
-	obtenerValorExistente "LOGEXT"
+	obtenerValorExistente "LOGEXT" "$1"
 	LOGEXT=$VALOR_EN_ARCH
-	obtenerValorExistente "LOGSIZE"
+	obtenerValorExistente "LOGSIZE" "$1"
 	LOGSIZE=$VALOR_EN_ARCH
-	obtenerValorExistente "DATASIZE"
+	obtenerValorExistente "DATASIZE" "$1"
 	DATASIZE=$VALOR_EN_ARCH
 }
 
@@ -647,137 +480,17 @@ function exportarVariables(){
 	
 }
 
-function verificarComponenteMAEDIR(){
-	FALLOMAEDIR=0
-	if ! [ -d $MAEDIR ]; then
-		./Grabar_L.sh "Instalar_TP" "Informativo" "No existe el directorio de archivos maestros: "$MAEDIR
-		echo "No existe el directorio de archivos maestros:" $MAEDIR >> componentesFaltantes.auxINST
-		FALLOMAEDIR=1
-		return 1
-	fi
-	if ! [ -f $MAEDIR"/salas.mae" ]; then
-		./Grabar_L.sh "Instalar_TP" "Informativo" "No existe el archivo maestro de salas en: "$MAEDIR
-		echo "Archivo maestro de salas:" salas.mae >> componentesFaltantes.auxINST
-		FALLOMAEDIR=1
-	fi
-	if ! [ -f $MAEDIR"/obras.mae" ]; then
-		./Grabar_L.sh "Instalar_TP" "Informativo" "No existe el archivo maestro de obras en: "$MAEDIR
-		echo "Archivo maestro de obras:" obras.mae >> componentesFaltantes.auxINST
-		FALLOMAEDIR=1
-	fi
-}
-
-function verificarEjecutable(){
-	if ! [ -f "$1"/"$2" ]; then
-		msj="No existe el archivo "$2" en: "$1
-		./Grabar_L.sh "Instalar_TP" "Informativo" "$msj"
-		echo "Archivo ejecutable: ""$2" >> componentesFaltantes.auxINST
-		FALLOBINDIR=1
-	fi
-}
-
-function verificarComponenteBINDIR(){
-	FALLOBINDIR=0
-	if ! [ -d $BINDIR ]; then
-		./Grabar_L.sh "Instalar_TP" "Informativo" "No existe el directorio de ejecutables: "$BINDIR
-		echo "No existe el directorio de archivos ejecutables:" $BINDIR >> componentesFaltantes.auxINST
-		FALLOBINDIR=1
-		return 1
-	fi
-	verificarEjecutable $BINDIR Iniciar_B.sh
-	verificarEjecutable $BINDIR Recibir_B.sh
-	verificarEjecutable $BINDIR Reservar_B.sh
-	verificarEjecutable $BINDIR Grabar_L.sh
-	verificarEjecutable $BINDIR Mover_B.sh
-	verificarEjecutable $BINDIR Start_D.sh
-	verificarEjecutable $BINDIR Stop_D.sh
-}
-
-function verificarComponenteARRIDIR(){
-	FALLOARRIDIR=0
-	if ! [ -d $ARRIDIR ]; then
-		./Grabar_L.sh "Instalar_TP" "Informativo" "No existe el directorio de arribos: "$ARRIDIR
-		echo "No existe el directorio de arribos: "$ARRIDIR >> componentesFaltantes.auxINST
-		FALLOARRIDIR=1
-	fi
-}
-
-function verificarComponenteACEPDIR(){
-	FALLOACEPDIR=0
-	if ! [ -d $ACEPDIR ]; then
-		./Grabar_L.sh "Instalar_TP" "Informativo" "No existe el directorio de archivos aceptados: "$ACEPDIR
-		echo "No existe el directorio de archivos aceptados: "$ACEPDIR >> componentesFaltantes.auxINST
-		FALLOACEPDIR=1
-	fi
-}
-
-function verificarComponenteRECHDIR(){
-	FALLORECHDIR=0
-	if ! [ -d $RECHDIR ]; then
-		./Grabar_L.sh "Instalar_TP" "Informativo" "No existe el directorio de archivos rechazados: "$RECHDIR
-		echo "No existe el directorio de archivos rechazados: "$RECHDIR >> componentesFaltantes.auxINST
-		FALLORECHDIR=1
-	fi
-}
-
-function verificarComponenteREPODIR(){
-	FALLOREPODIR=0
-	if ! [ -d $REPODIR ]; then
-		./Grabar_L.sh "Instalar_TP" "Informativo" "No existe el directorio de reportes de salida: "$REPODIR
-		echo "No existe el directorio de reportes de salida: "$REPODIR >> componentesFaltantes.auxINST
-		FALLOREPODIR=1
-	fi
-}
-
-function verificarComponentePROCDIR(){
-	FALLOPROCDIR=0
-	if ! [ -d $PROCDIR ]; then
-		./Grabar_L.sh "Instalar_TP" "Informativo" "No existe el directorio de archivos procesados: "$PROCDIR
-		echo "No existe el directorio de archivos procesados: "$PROCDIR >> componentesFaltantes.auxINST
-		FALLOPROCDIR=1
-	fi
-}
-
-function verificarComponenteLOGDIR(){
-	FALLOLOGDIR=0
-	if ! [ -d $LOGDIR ]; then
-		./Grabar_L.sh "Instalar_TP" "Informativo" "No existe el directorio de archivos de log: "$LOGDIR
-		 echo "No existe el directorio de archivos de log: "$LOGDIR >> componentesFaltantes.auxINST
-		FALLOLOGDIR=1
-	fi
-}
-
-function verificarComponenteDATASIZE() {
-	obtenerEspacio
-	FALLODATASIZE=0
-	#Si TAM es menor que DATASIZE comp es 1
-	comp=`echo "$DATASIZE > $TAM" | bc`
-	if [ $comp -eq 1 ];then
-		echo "Tamaño de datos definido muy elevado: "$DATASIZE  >> componentesFaltantes.auxINST
-		DATASIZE=100
-		FALLODATASIZE=1
-	fi
+function verificarEspacioEnDisco() {
+	TAM=`./ObtenerEspacio.sh $ARRIDIR`
 	comp=`echo "$DATASIZE > $TAM" | bc`
 	if [ $comp -eq 1 ];then
 		./Grabar_L.sh "Instalar_TP" "Informativo" "Insuficiente espacio en disco"
 		./Grabar_L.sh "Instalar_TP" "Informativo" "Espacio disponible: "$TAM" Mb"
-		./Grabar_L.sh "Instalar_TP" "Informativo" "Espacio requerido: "$DATASIZE" Mb"
+		./Grabar_L.sh "Instalar_TP" "Informativo" "Espacio requisitado: "$DATASIZE" Mb"
 		echo "Espacio Insuficiente"
 		msj="Espacio insuficiente para datos. Instalacion Abortada"
 		finalizarInstalacion "$msj" "ERROR"
 	fi
-}
-
-function verificarComponentes(){
-	verificarComponenteBINDIR
-	verificarComponenteMAEDIR
-	verificarComponenteARRIDIR
-	verificarComponenteDATASIZE
-	verificarComponenteACEPDIR
-	verificarComponenteRECHDIR
-	verificarComponenteREPODIR
-	verificarComponentePROCDIR
-	verificarComponenteLOGDIR
 }
 
 function imprimirFaltantes(){
@@ -785,17 +498,17 @@ function imprimirFaltantes(){
 	cat componentesFaltantes.auxINST
 }
 
-#???
 function completarInstalacion(){
 	entradaSiNo "Desea Completar la Instalación?"
 	
 	if [ "${RTA^^}" == "NO" ]; then
+		rm $CONFTEMP
 		finalizarInstalacion "El Usuario decidió no completar la instalación" "ERROR"
 	fi
 	
 	chequeoPerl
 	
-	imprimirSusRespuestas 1 "LISTA"
+	./imprimirSusRespuestas.sh 0 "LISTA" "Instalar_TP"
 	
 	confirmarInstalacion
 	
@@ -803,33 +516,28 @@ function completarInstalacion(){
 	
 	moverArchivos
 	
-	actualizarConfiguracionExistente
+	#elimina la configuracion anterior
+	mv $CONFTEMP $ARCHCONF
 	
 	finalizarInstalacion "Instalacion: CONCLUIDA" "OK"
 }
 
-function verificarInstalacion(){
-	obtenerValoresExistentes
-	verificarComponentes
+function informaryCompletarInstalacion(){
+	./imprimirSusRespuestas.sh 1 "INCOMPLETA" "Instalar_TP"
 	
-	sumaFallos=`expr $FALLOBINDIR + $FALLOMAEDIR + $FALLOARRIDIR + $FALLODATASIZE + $FALLOACEPDIR + $FALLORECHDIR + $FALLOREPODIR + $FALLOPROCDIR + $FALLOLOGDIR`
-	echo $sumaFallos
-	if [ $sumaFallos -eq 0 ]; then
-		imprimirSusRespuestas 1 "COMPLETA"
-		read basura
-		finalizarInstalacion "Proceso de Instalación Cancelado" "OK"
-	fi
+	CONFTEMP=$ARCHCONF".auxINST"
+	obtenerValoresExistentes "$CONFTEMP"
 	
-	imprimirSusRespuestas 1 "INCOMPLETA"
+	verificarEspacioEnDisco
+	
 	imprimirFaltantes
-	
-	modificarVarsPorFallo
-	
-	exportarVariables
-	
+
 	completarInstalacion
 }
 
+
+#otorga permisos de ejecucion
+chmod a+x *.sh
 
 #setea la variable de configuracion
 CONFDIR=grupo02/conf/
@@ -847,7 +555,24 @@ ARCHCONF=$CONFDIR"Instalar_TP.conf"
 export ARCHCONF
 
 if [ -f $ARCHCONF ]; then
-	verificarInstalacion
-else
+	obtenerValoresExistentes "$ARCHCONF"
+	exportarVariables
+fi
+
+./Verificar_Instalacion.sh
+
+estado=$?
+# no esta instalado
+if [ $estado -eq 2 ]; then
 	instalar
 fi
+
+# instalacion incompleta
+if [ $estado -eq 1 ]; then
+	informaryCompletarInstalacion
+fi
+
+#instalacion completa
+./imprimirSusRespuestas.sh 1 "COMPLETA" "Instalar_TP"
+read basura
+finalizarInstalacion "Proceso de Instalación Cancelado" "OK"
