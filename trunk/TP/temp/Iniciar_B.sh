@@ -4,10 +4,6 @@
 CONF="../conf/Instalar_TP.conf" # TODO: esto funcionaria si al hacer .. vuelvo a GRUPO
 #TODO: yo asumo que estoy en    foo/bin/Iniciar_B.sh y el la conf en   foo/conf/Instalar_TP.conf
 
-function verificarInstalacion {
-	#TODO
-	return 0
-}
 
 # Verifica que las variables de ambiente esten vacias.
 # Si no lo estan, el ambiente ya habia sido inicializado.
@@ -153,17 +149,11 @@ function solicitarInicioRecibir {
 ./Grabar_L.sh "Iniciar_B" "Informativo" "Inicio de Ejecución"
 
 # Verificamos que la instalacion este completa
-verificarInstalacion
 ./Grabar_L.sh "Iniciar_B" "Informativo" "Verificando la instalacion del paquete"
+./Verificar_Instalacion.sh
 if [ $? -eq 1 ] ; then
-	echo "No se puede iniciar debido a una instalación incompleta o inexistente."
-	echo "Por favor instale el paquete mediante el comando Instalar_TP."
-	./Grabar_L.sh "Iniciar_B" "SEVERAL ERROR" "La instalacion no se ha completado"
-	./Grabar_L.sh "Iniciar_B" "SEVERAL ERROR" "Componentes faltantes: ..................." #TODO listar lo que falte
 	./Grabar_L.sh "Iniciar_B" "Informativo" "Fin de Ejecución"
 	exit 1
-else
-	./Grabar_L.sh "Iniciar_B" "Informativo" "Se encuentra todo instalado."
 fi
 
 # Veo si ya había sido inicializado el ambiente
