@@ -1,0 +1,186 @@
+*******************************************************************************************************
+**												     **
+**				Trabajo Practico - 75.08 Sistemas Operativos			     **
+**						version 1.01					     **
+**												     **
+*******************************************************************************************************
+
+
+
+*******************************************************************************************************
+**												     **
+**				BUCHWALD, Martin Ezequiel (93155)				     **
+**				  MENZANO DIAZ, Nicolas (93154)					     **
+**			      GENENDER PEÑA, Ezequiel David (93163)				     **
+**				 WOITES, Jennifer Andrea (93274)				     **
+**				    STANKUS, Joaquin (93143)					     **
+**				     OSLER, Eugenia (XXXXX)					     **
+**												     **
+*******************************************************************************************************
+
+*************************************
+**	   REQUERIMIENTOS	   **
+**            MINIMOS              **
+*************************************
+
+ - Sistema Operativo Unix
+ - Bash version 4 o superior
+ - Perl version 5 o superior
+
+*************************************
+**	    EXTRACCION		   **
+**         DE  ARCHIVOS            **
+*************************************
+
+1 - Extraiga del dispositivo el archivo TP-grupo02.tar.gz
+2 -   
+
+*************************************
+**	    INSTALACION		   **
+*************************************
+
+1 - Tomar la carpeta grupo02 y colocarla en el escritorio
+2 - Abrir una consola/terminal
+3 - Acceder a la carpeta donde se encuentran los archivos de instalacion. Para acceder a esta carpeta escriba el siguiente comando y presione enter:
+	cd Escritorio/grupo02/"ARCHIVOS DE INSTALACION"
+4 - Ejecute la siguiente instruccion para darle permiso de ejecucion:
+	chmod a+x Instalar_TP.sh.
+5 - Ejecute la siguiente instruccion para ejecutar la instalacion
+	./Instalar_TP.sh
+
+	5.1 - Para poder instalar el TP, debe aceptar los terminos y condiciones. Si no acepta, la instalacion no se realizara
+		a) Escriba SI y presione enter para continuar con la instalacion (continua en el paso 5.2)
+		b) Escriba NO y presione enter para abortar la instalacion (FIN DE INSTALACION)
+	5.2 - Se verificara la version de Perl. Para poder continuar la instalacion, la version de Perl debera ser 5 o superior. En el caso de 		que no sea una version adecuada, la instalacion no se completara.  
+	5.3 - Defina los siguientes directorios: Todos los directorios se almacenaran en grupo02/"Ruta definida por el usuario"
+		5.3.1 - Defina el directorio de instalacion de archivos ejecutables. Por default la ruta es grupo02/bin
+		5.3.2 - Defina el directorio de instalacion de los archivos maestros. Por default la ruta es grupo02/mae
+		5.3.3 - Defina el directorio de arribo de archivos externos. Por default la ruta es grupo02/arribos
+		5.3.4 - Defina el espacio minimo libre para el arribo de archivos externos. Este valor es en Mbytes. Por default el valor es 			de 100 Mbytes.
+			5.3.4.1 - Se verificara el espacio disponible para los archivos de Arribos. Si el valor definido para el arribo de 				archivos externos es menor que el espacio disponible, se indicara que el espacio es insuficiente. Si el espacio es 				suficiente, continua en el "paso 5.3.5". En caso de que el espacio se ineficiente puede optar por lo siguiente:
+				a) Redefinir el espacio minimo libre (continua en el paso 5.3.4)
+				B) No redefinir el espacio minimo libre
+			5.3.4.2 - Si no desea redefinir el espacio minimo libre, debera eliminar archivos para aumentar el espacio libre. 				Cuando haya eliminado los archivos presione enter para continuar. (continua en el paso 5.3.4.1)
+		5.3.5 - Defina el directorio de grabacion de los archivos aceptados. Por default la ruta es grupo02/aceptados
+		5.3.6 - Defina el directorio de grabacion de los archivos rechazados. Por default la ruta es grupo02/rechazados
+		5.3.7 - Defina el directorio de grabacion de los listados de salida. Por default la ruta es grupo02/listados
+		5.3.8 - Defina el directorio de grabacion de los archivos procesados. Por default la ruta es grupo02/procesados
+		5.3.9 - Defina el directorio de logs para los comandos. Por default la ruta es grupo02/log
+		5.3.10 - Defina el tama???o maximo para los archivos de log. El valor definido esta en Kbytes. El valor por default es de 400 			Kbytes
+	5.4 - Se le mostrara la configuracion que ha establecido y se le preguntara si la misma es correcta:
+		a) Escriba SI y presione enter, si la configuracion es correcta. (continua en el paso 5.4)
+		b) Escriba NO y presione enter, si la configuracion no es correcta. (continua en el paso 5.2)
+	5.5 - La instalacion se llevara a cabo con los parametros que se mostraron en el paso anterior. Se debe confirmar antes de instalar.
+		a) Escriba SI y presione enter si desea continuar con la instalacion. (continua en el paso 5.5)
+		b) Escriba NO y presione enter para abortar la instalacion (FIN DE INSTALACION)
+
+
+Al finalizar la instalacion exitosamente, se generaran los siguientes archivos y carpetas en el directorio grupo02:
+	- Carpeta conf con los siguientes archivos:
+		~ Instalar_TP.conf: Archivo de configuracion
+		~ Instalar_TP.log: Archivo de log
+	- Carpeta "Directorio indicado por el usuario para archivos ejecutables" con los siguientes archivos:
+		~ Grabar_L.sh
+		~ 
+	- Carpeta "Directorio indicado por el usuario para archivos maestros" con los siguientes archivos:
+		~ obras.mae: Archivo maestro de obras
+		~ salas.mae: Archivo maetsro de salas
+	- Carpeta "Directorio indicado por el usuario para arribo de archivos externos" vacia.
+	- Carpeta "Directorio indicado por el usuario para grabacion de los archivos aceptados" vacia.
+	- Carpeta "Directorio indicado por el usuario para grabacion de los archivos rechazados" vacia.
+	- Carpeta "Directorio indicado por el usuario para grabacion de los listados de salida" vacia.
+	- Carpeta "Directorio indicado por el usuario para grabacion de los archivos procesados" vacia.
+	- Carpeta "Directorio indicado por el usuario para el log para los comandos" vacia.	
+
+
+*************************************
+**	  RE-INSTALACION    	   **
+*************************************
+
+Si necesita reinstalar el TP, continue con los siguientes pasos (Si usted ha eliminado la carpeta conf ubicada en grupo02 o eliminado el archivo Instalar_TP.conf, se realizara la instalacion completa en modo normal, en ese caso, dirijase a la seccion de instalacion):
+
+	ATENCION: Si se modifico la carpeta de ARCHIVOS DE INSTALACION, no se garantiza que se reinstale correctamente. Si usted ha modificado 		esta carpeta, extraiga los archivos originales del dispositivo y sobre escriba la carpeta.
+ 
+1 - Abrir una consola/terminal
+2 - Acceder a la carpeta donde se encuentran los archivos de instalacion. Para acceder a esta carpeta escriba el siguiente comando y 	presione enter:
+	cd Escritorio/grupo02/"ARCHIVOS DE INSTALACION"
+3 - Ejecute la siguiente instruccion para darle permiso de ejecucion:
+	chmod a+x Instalar_TP.sh.
+4 - Ejecute la siguiente instruccion para ejecutar la instalacion
+	./Instalar_TP.sh
+
+	4.1 - Se imprimira en pantalla las condiciones actuales de la instalacion y se listaran, en caso de que falten directorios o 		archivos, cuales son los faltanes.
+	4.2 - En estado de la instalacion se informara:
+		a) COMPLETA: La instalacion esta completa (no falta ningun componenete).Finaliza la instalacion
+		b) INCOMPLETA: La instalacion esta incompleta, es decir, faltan uno o varios componentes. (continua en el paso 4.3)
+	4.3 - Se informaran los nuevos parametros de instalacion. Estos parametros son default y no se pueden modificar.
+	4.4 - Se pide confirmar si desea completar la instalacion con estos nuevos valores.
+		a) Escriba SI y presione enter para completar la instalacion (FIN DE INSTALACION)
+		B) Escriba NO y presione enter para no completar la instalacion. Esta accion dejara la instalacion INCOMPLETA (mismo estado 			en el que se encontraba al comenzar a ejecutar el comando). Si desea realizar una instalacion Completa, borre el archivo 			Instalar_TP.conf que se encuentra en grupo02/conf y dirijase a la seccion de instalacion para continuar.   
+
+
+Al finalizar la re-instalacion exitosamente, se generaran o actualizan los siguientes archivos y carpetas en el directorio grupo02:
+	- Carpeta conf con los siguientes archivos: (ya existente)
+		~ Instalar_TP.conf: Archivo de configuracion (actualizado con los parametros que se modificaron)
+		~ Instalar_TP.log: Archivo de log (si no existia, lo crea)
+	
+	Si faltaba algun archivo, o no existia la carpeta:	
+		- Carpeta "bin" con los siguientes archivos:
+			~ Grabar_L.sh
+			~ 
+		- Carpeta "mae" con los siguientes archivos:
+			~ obras.mae: Archivo maestro de obras
+			~ salas.mae: Archivo maetsro de salas
+
+	Si no existe: "Directorio indicado por el usuario para arribo de archivos externos" se crea:
+		- Carpeta "arribos" vacia
+
+	Si no existe: "Directorio indicado por el usuario para grabacion de los archivos aceptados" se crea:
+		- Carpeta "aceptados" vacia
+
+	Si no existe: "Directorio indicado por el usuario para grabacion de los archivos rechazados" se crea:
+		- Carpeta "rechazados" vacia
+
+	Si no existe: "Directorio indicado por el usuario para grabacion de los listados de salida" se crea:
+		- Carpeta "listados" vacia
+
+	Si no existe: "Directorio indicado por el usuario para grabacion de los archivos procesados" se crea:
+		- Carpeta "procesados" vacia
+
+	Si no existe: "Directorio indicado por el usuario para el log para los comandos" se crea:
+		- Carpeta "log" vacia
+
+
+*************************************
+**	 INICIAR EL PROGRAMA  	   **
+*************************************
+
+1 - Abrir una consola/terminal
+2 - Acceder a la carpeta donde se encuentran los archivos ejecutables con el siguiente comando (donde dice "bin", escriba la ruta que seteo durante la instalacion):
+	cd Escritorio/grupo02/bin
+Si no recuerda cual es la ruta de la carpeta, puede buscarla en el archivo de configuracion. Para ello acceda a la carpeta "grupo02/conf/Instalar_TP.conf". Podra observar una linea similar a la siguiente:
+	???????????????
+3 - Ejecute la siguiente instruccion para darle permiso de ejecucion:
+	chmod a+x Iniciar_B.sh
+4 - Ejecute la siguiente instruccion para ejecutar el inicio del programa: 
+	./Iniciar_B.sh
+
+	4.1 - Si el programa no esta correctamente instalado, se le informara por pantalla. En ese caso dirijase a la seccion RE-INSTALACION.
+	4.2 - Si alguna de las variables ya fue inicializada en la consola, se le informara de ello. En ese caso, cierre la consola y vuelva 		al paso 1
+	4.3 - Se le pedira que confirme si desea efectuar la activacion del sistema.
+		a) Escriba Si y presione enter para iniciar el sistema
+		b) Escriba No y presione enter si no desea efectuar la activacion del sistema;
+			4.3.b.1 - Se le informara la configuracion actual y el estado del sistema.
+
+*************************************************************************************
+**	  CLASIFICAR LOS ARCHIVOS QUE LLEGAN AL DIRECTORIO DE ARRIBOS    	   **
+*************************************************************************************
+
+
+
+
+*************************************
+**	  RE-INSTALACION    	   **
+*************************************
+
+
