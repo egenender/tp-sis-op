@@ -1,0 +1,20 @@
+Dentro de grupo02 hay una carpeta "ARCHIVOS DE INSTALACION" que no debera ser modificada por el susuario en ningun momento. Todos los archivos necesarios para instalar y reinstalar deben estar en esa carpeta. Si los borran la instalacion/reinstalacion no funcionara
+
+La version de bash debe ser 4 o superior
+
+Todo lo que esta en ACEPTDIR en la etapa de Reservar_B tiene nombre de archivo correcto
+
+Toda ruta establecida debe estar dentro de grupo0
+
+La ruta no puede contener una carpeta llamada conf
+La ruta no puede contener una carpeta llamada grupo02
+
+
+
+
+
+ver************************************************
+
+COnflicto: Grabar log dice cantidad de lineas y en tdo lo demas es Kb
+
+
