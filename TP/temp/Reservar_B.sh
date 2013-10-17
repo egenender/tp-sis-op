@@ -4,26 +4,10 @@
 # Solo se tiene en cuenta la cantidad de butacas disponibles, no posiciones especificas
 # Se dispara automaticamente
 
-MAEDIR="MAESTROS"
-ARRIDIR="ARRIBOS"
-ACEPDIR="ACEPTADOS"
-RECHDIR="RECHAZADOS"
-REPODIR="INVITADOS"
-LANG="_ES.UTF-8"
-BINDIR="."
-LOGSIZE=300
-export LOGSIZE
-LOGEXT=".log"
-export LOGEXT
-LOGDIR="LOGS"
-export LOGDIR
-
-PROCDIR="PROCESADOS"
-
 
 function inicializarReservar(){
-        "$BINDIR"/Grabar_L.sh "Reservar_B" "Informativo" "Inicio de operacion de Reservar_B"
-        "$BINDIR"/Grabar_L.sh "Reservar_B" "Informativo" "Se procesan `ls $ACEPDIR | wc -l` archivos"
+        ./Grabar_L.sh "Reservar_B" "Informativo" "Inicio de operacion de Reservar_B"
+        ./Grabar_L.sh "Reservar_B" "Informativo" "Se procesan `ls $RUTAACONF$ACEPDIR | wc -l` archivos"
 }
 
 function cumpleFormato(){
@@ -71,12 +55,12 @@ function distanciaAFechaValida(){
         FECHA_ACTUAL=$(date +%m/%d/%y)
         
         DIF_SEG=`expr $(date --date=$FECHA_RESERVA +%s) - $(date --date=$FECHA_ACTUAL +%s)`
-                #Divido por los segundos en un dia:
-                DIAS=`expr $DIF_SEG / 86400`
+        #Divido por los segundos en un dia:
+        DIAS=`expr $DIF_SEG / 86400`
 
-                if [ $DIAS -le 0 ]
-                then
-                return 1
+        if [ $DIAS -le 0 ]
+        then
+			return 1
         fi
         
         if [ $DIAS -eq 1 ]
@@ -150,47 +134,47 @@ function rechazarReserva(){
         FECHA_GRABACION=`date`
         
         
-        SALIDA=`echo $RECH_REGISTRO';'$MOTIVO';'$3';'$5';'$4';'$FECHA_GRABACION';'$USER`
-        echo $SALIDA >> $PROCDIR/reservas.nok 
+        SALIDA=`echo $RUTAACONF$RECH_REGISTRO';'$MOTIVO';'$3';'$5';'$4';'$FECHA_GRABACION';'$USER`
+        echo $SALIDA >> $RUTAACONF$PROCDIR/reservas.nok 
         registrosNOK=`expr $registrosNOK + 1`
 }
 
 function procesarArchivo(){
         ARCHIVO_ACTUAL=$1
-        "$BINDIR"/Grabar_L.sh "Reservar_B" "Informativo" "Se procesa el archivo $ARCHIVO_ACTUAL"
+        ./Grabar_L.sh "Reservar_B" "Informativo" "Se procesa el archivo $ARCHIVO_ACTUAL"
                 
                 #Verifico no haber procesado ya este archivo:
         if [ `ls $PROCDIR | grep "^$ARCHIVO_ACTUAL$" | wc -l` != 0 ] 
         then
-                "$BINDIR"/Grabar_L.sh "Reservar_B" "Error" "Se rechaza el archivo por estar DUPLICADO"
-                "$BINDIR"/Mover_B.sh $ARCHIVO_ACTUAL $RECHDIR
+                ./Grabar_L.sh "Reservar_B" "Error" "Se rechaza el archivo por estar DUPLICADO"
+                ./Mover_B.sh $ARCHIVO_ACTUAL $RUTAACONF$RECHDIR
                 return 1
         fi
 
         #Verificamos si el archivo se encuentra vacio:
         if [ `cat $ARCHIVO_ACTUAL|wc -l` == 0 ]         
         then
-                "$BINDIR"/Grabar_L.sh "Reservar_B" "Error" "No se procesa el archivo, por estar vacio"
-                "$BINDIR"/Mover_B.sh $ARCHIVO_ACTUAL $RECHDIR            
+                ./Grabar_L.sh "Reservar_B" "Error" "No se procesa el archivo, por estar vacio"
+                ./Mover_B.sh $ARCHIVO_ACTUAL $RUTAACONF$RECHDIR            
                 return 2
         fi
 
-                cumpleFormato $ARCHIVO_ACTUAL
+        cumpleFormato $ARCHIVO_ACTUAL
         RESPETAFORMATO=$?
         
         if [ $RESPETAFORMATO != 0 ]
         then
-                "$BINDIR"/Grabar_L.sh "Reservar_B" "Several Error" "El archivo no respeta el formato, no se lo procesa"
-                "$BINDIR"/Mover_B.sh $ARCHIVO_ACTUAL $RECHDIR
+                ./Grabar_L.sh "Reservar_B" "Several Error" "El archivo no respeta el formato, no se lo procesa"
+                ./Mover_B.sh $ARCHIVO_ACTUAL $RUTAACONF$RECHDIR
                 return 3
         fi
         
         #Necesito saber el correo del solicitante:
-        CORREO=`echo $ARCHIVO_ACTUAL | cut -d "-" -f 2`
-		ID=`echo "$ARCHIVO_ACTUAL"|cut -d/ -f 2 | cut -d- -f 1`
-		
+        CORREO=`echo $2 | cut -d- -f 2`
+		ID=`echo "$2"|cut -d/ -f 2 | cut -d- -f 1`
+						
 		#Validar exitencia de evento
-        ARCH_COMBOS="$PROCDIR"/combos.dis
+        ARCH_COMBOS=$RUTAACONF$PROCDIR/combos.dis
         if [ `expr $ID % 2` != 0 ]
         then
 			ID_OBRA=$ID
@@ -199,7 +183,7 @@ function procesarArchivo(){
 			ID_OBRA="[^;]*"
 			ID_SALA=$ID
 		fi
-
+				
 		#Proceso el archivo, linea a linea (registro a registro):
         for linea in `cat $ARCHIVO_ACTUAL`
         do      
@@ -213,8 +197,7 @@ function procesarArchivo(){
                 CANT_RESERVAS=`echo $linea | cut -d ";" -f 6`
                 SECCION=`echo $linea | cut -d ";" -f 7`
                                 
-                
-                                
+				                                
                 #validar fecha:
                 #Verificar Fecha Valida. Rechazar (motivo = fecha invalida)
                 fechaValida $FECHA_REGISTRO
@@ -224,7 +207,7 @@ function procesarArchivo(){
 					rechazarReserva $linea 1 "Falta Obra" "Falta Sala" $CORREO
                     continue
                 fi
-                                                                
+				
                 #Comparar fecha actual con la de la funcion. Si la diferencia es menor o igual a 1, se rechaza. (motivo = reserva tardia)
                 #Si la diferencia es mayor a 30, se rechaza (motivo = reserva anticipada)
                 distanciaAFechaValida $FECHA_REGISTRO
@@ -243,7 +226,7 @@ function procesarArchivo(){
 					rechazarReserva $linea 3 "Falta Obra" "Falta Sala" $CORREO
                     continue
                 fi
-                                               
+                
                 EXISTE=`grep "^[^;]*;$ID_OBRA;$FECHA_REGISTRO;$HORA_REGISTRO;$ID_SALA;" $ARCH_COMBOS | wc -l `      
                 if [ $EXISTE == 0 ]
                 then
@@ -257,17 +240,18 @@ function procesarArchivo(){
                     continue
                 fi
                 ID_COMBO=`grep "^[^;]*;$ID_OBRA;$FECHA_REGISTRO;$HORA_REGISTRO;$ID_SALA;" $ARCH_COMBOS | cut -d ";" -f 1`
-                                                                                
+																	
                 #Validar la disponibilidad
                 #Si es la primera vez que veo este combo en este ciclo:
-          
+				
                 if [ "${Disponibilidades[$ID_COMBO]}" == "" ]
                 then
 					DISP=`grep "^$ID_COMBO;" $ARCH_COMBOS | cut -d ";" -f 7`
-                    Disponibilidades[$ID_COMBO]=$DISP
-                fi
+				    Disponibilidades[$ID_COMBO]=$DISP
+				fi
+				
                 DISPONIBILIDAD=${Disponibilidades[$ID_COMBO]}
-        
+				
                 ID_OBRA=`grep "^$ID_COMBO;" $ARCH_COMBOS | cut -d ";" -f 2`
                 ID_SALA=`grep "^$ID_COMBO;" $ARCH_COMBOS | cut -d ";" -f 5`
                 
@@ -282,17 +266,17 @@ function procesarArchivo(){
                                 
                 #A partir de aca el registro ya es valido:
                 #Obtengo el nombre de la obra:
-                NOMBRE_OBRA=`grep "^$ID_OBRA;" $MAEDIR/obras.mae | cut -d ";" -f 2`
+                NOMBRE_OBRA=`grep "^$ID_OBRA;" $RUTAACONF$MAEDIR/obras.mae | cut -d ";" -f 2`
                 #Obtengo el nombre de la sala:
-                NOMBRE_SALA=`grep "^$ID_SALA;" $MAEDIR/salas.mae | cut -d ";" -f 2`
+                NOMBRE_SALA=`grep "^$ID_SALA;" $RUTAACONF$MAEDIR/salas.mae | cut -d ";" -f 2`
                               
                 FECHA=`date`
                 SALIDA=`echo "$ID_OBRA"';'"$NOMBRE_OBRA"';'"$FECHA_REGISTRO"';'"$HORA_REGISTRO"';'"$ID_SALA"';'"$NOMBRE_SALA"';'"$CANT_RESERVAS"';'"$ID_COMBO"';'"$REF_INTERNA"';'"$CANT_RESERVAS"';'"$CORREO"';'"$FECHA"';'"$USER"`
-                echo $SALIDA >> $PROCDIR/reservas.ok 
+                echo $SALIDA >> $RUTAACONF$PROCDIR/reservas.ok 
                 registrosOK=`expr $registrosOK + 1`
         done
         #Muevo el archivo procesado:
-        "$BINDIR"/Mover_B.sh $ARCHIVO_ACTUAL $PROCDIR
+        ./Mover_B.sh $ARCHIVO_ACTUAL $RUTAACONF$PROCDIR
 }
 
 declare -A Disponibilidades
@@ -301,9 +285,9 @@ registrosOK=0
 registrosNOK=0
 
 inicializarReservar
-for archivo in `ls $ACEPDIR`
+for archivo in `ls $RUTAACONF$ACEPDIR`
 do
-        procesarArchivo `echo "$ACEPDIR"/$archivo`
+        procesarArchivo `echo "$RUTAACONF$ACEPDIR"/$archivo` $archivo
 done
 
 #Verificacion:
@@ -317,20 +301,20 @@ fi
 for ID_COMBO in "${!Disponibilidades[@]}"
 do
         #Busco la linea que estoy actualizando:
-        REG_INICIO=`grep "^$ID_COMBO;" "$PROCDIR"/combos.dis | sed 's/\(.*\);[^;]*;[^;]*$/\1/'`
-        REG_FIN=`grep "^$ID_COMBO;" "$PROCDIR"/combos.dis | sed 's/.*;[^;]*;\([^;]*\)$/\1/'`
+        REG_INICIO=`grep "^$ID_COMBO;" "$RUTAACONF$PROCDIR"/combos.dis | sed 's/\(.*\);[^;]*;[^;]*$/\1/'`
+        REG_FIN=`grep "^$ID_COMBO;" "$RUTAACONF$PROCDIR"/combos.dis | sed 's/.*;[^;]*;\([^;]*\)$/\1/'`
                 
-        TEMPORAL="$PROCDIR"/combosTEMP.dis
+        TEMPORAL="$RUTAACONF$PROCDIR"/combosTEMP.dis
         #Me quedo con todas las lineas excepto con la que estoy actualizando
-        sed "/^$ID_COMBO/d" "$PROCDIR"/combos.dis > $TEMPORAL
+        sed "/^$ID_COMBO/d" "$RUTAACONF$PROCDIR"/combos.dis > $TEMPORAL
         NUEVO_REG=`echo "$REG_INICIO"';'"${Disponibilidades[$ID_COMBO]}"';'$REG_FIN`
         
-        echo $NUEVO_REG >> "$PROCDIR"/combosTEMP.dis
-        cat "$PROCDIR"/combosTEMP.dis > "$PROCDIR"/combos.dis
-        rm "$PROCDIR"/combosTEMP.dis
-        "$BINDIR"/Grabar_L.sh "Reservar_B" "Informativo" "Actualizacion de Disponibilidad"
+        echo $NUEVO_REG >> "$RUTAACONF$PROCDIR"/combosTEMP.dis
+        cat $RUTAACONF"$PROCDIR"/combosTEMP.dis > "$RUTAACONF$PROCDIR"/combos.dis
+        rm $RUTAACONF"$PROCDIR"/combosTEMP.dis
+        ./Grabar_L.sh "Reservar_B" "Informativo" "Actualizacion de Disponibilidad"
 done
 
-"$BINDIR"/Grabar_L.sh "Reservar_B" "Informativo" "Fin de Reservar_B"
+./Grabar_L.sh "Reservar_B" "Informativo" "Fin de Reservar_B"
 
 exit 0
