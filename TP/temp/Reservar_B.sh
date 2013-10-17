@@ -144,7 +144,7 @@ function procesarArchivo(){
         ./Grabar_L.sh "Reservar_B" "Informativo" "Se procesa el archivo $ARCHIVO_ACTUAL"
                 
                 #Verifico no haber procesado ya este archivo:
-        if [ `ls $PROCDIR | grep "^$ARCHIVO_ACTUAL$" | wc -l` != 0 ] 
+        if [ `ls $RUTAACONF$PROCDIR | grep "^$2$" | wc -l` != 0 ] 
         then
                 ./Grabar_L.sh "Reservar_B" "Error" "Se rechaza el archivo por estar DUPLICADO"
                 ./Mover_B.sh $ARCHIVO_ACTUAL $RUTAACONF$RECHDIR
