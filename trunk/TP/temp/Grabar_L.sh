@@ -9,8 +9,9 @@
 CANT_LINEAS_REDIMENSION=50
 
 function verificarRecorte(){
-	CANT_LINEAS=`cat $RUTA_LOG | wc -l`
-	if [ "$CANT_LINEAS" -gt "$LOGSIZE" ]
+	TAM_ACTUAL=`ls -l $RUTA_LOG | cut -d " " -f 5`
+	let TAM_MAX=$LOGSIZE*1024
+	if [ "$TAM_ACTUAL" -gt "$TAM_MAX" ]
 	then
 		#Me quedo con las ultimas 50 lineas del log y agrego que recorto
 		TEMP_LOG=`echo "$RUTA_LOG".temp`
@@ -24,7 +25,7 @@ function verificarRecorte(){
 
 function loggear_install(){
 	
-	echo $MSJ_COMPLETO >> "$CONFDIR"/Instalar_TP.log
+	echo $MSJ_COMPLETO >> "../""$CONFDIR"/Instalar_TP.log
 }
 
 #Verifico que no me hayan pasado una mala cantidad de parametros
@@ -42,11 +43,11 @@ if [ $# == 3 ]
 then
 	TIPO_MSJ=$2
 	MENSAJE=$3
-	MSJ_COMPLETO=`date`" - "`echo ${TIPO_MSJ^^} - $MENSAJE`
+	MSJ_COMPLETO=`date`" - "`echo $USER - $TIPO_MSJ - $MENSAJE`
 else	
 	TIPO_MSJ=""
 	MENSAJE=$2
-	MSJ_COMPLETO=`date`" - "`echo $MENSAJE`
+	MSJ_COMPLETO=`date`" - "`echo $USER - $MENSAJE`
 fi
 
 if [ $CALL_COMANDO == "Instalar_TP" ]
@@ -55,7 +56,7 @@ then
 	exit 0
 fi
 
-RUTA_LOG=`echo $LOGDIR/$CALL_COMANDO$LOGEXT`
+RUTA_LOG=`echo $RUTAACONF$LOGDIR/$CALL_COMANDO"."$LOGEXT`
 
 echo $MSJ_COMPLETO >> $RUTA_LOG 
 verificarRecorte
