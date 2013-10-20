@@ -1,4 +1,4 @@
-#!/bin/bash            
+#!/bin/bash  
 #
 # Instala el TP
 #
@@ -10,13 +10,13 @@ function finalizarInstalacion(){
 	clear
 
 	rm -f *.auxINST
-	./Grabar_L.sh "Instalar_TP" "Informativo" "$1"
+	Grabar_L.sh "Instalar_TP" "$2" "$1"
 	FAIL='\033[91m'
 	ENDC='\033[0m'
 	OKGREEN='\033[92m'
 	echo ""
 
-	if [ "$2" == "OK" ]; then
+	if [ "$2" == "Informativo" ]; then
 		echo -e $OKGREEN
 		echo "La Instalacion ha concluido Satisfactoriamente."
 		echo -e $ENDC
@@ -38,7 +38,7 @@ function crearDirectorio(){
 	if ! [ -d $1/ ]; then
 		#mkdir crea el directorio
 		mkdir -p $1
-		./Grabar_L.sh "Instalar_TP" "Informativo" "Se creo el directorio "$1
+		Grabar_L.sh "Instalar_TP" "Informativo" "Se creo el directorio "$1
 	fi
 }
 
@@ -47,9 +47,10 @@ function crearDirectorio(){
 function entradaSiNo(){
 	RTA="NADA"
 	#ciclo hasta que el usuario indique Si o No
-	until [ "${RTA^^}" == "SI" ] || [ "${RTA^^}" == "NO" ]; do
-		echo $1" Si - No"
+	until [ "${RTA}" == "SI" ] || [ "${RTA}" == "NO" ]; do
+		echo $1" SI - NO"
 		read RTA
+		RTA=${RTA^^}
 	done
 }
 
@@ -59,7 +60,18 @@ function abortarPorNoPerl(){
 	echo "TP SO7508 Segundo Cuatrimestre 2013. Tema B Copyright © Grupo 02"
 	echo "Para instalar el TP es necesario contar con Perl 5 o superior instalado."
 	echo "Efectue su instalación e intentelo nuevamente."
+	read
 	finalizarInstalacion "Para instalar el TP es necesario contar con Perl 5 o superior instalado. Proceso de Instalacion Cancelado" "ERROR"
+}
+
+#Imprime mensaje de que no esta Bash o su version correcta
+#y finaliza el proceso de instalacion
+function abortarPorNoBash(){
+	echo "TP SO7508 Segundo Cuatrimestre 2013. Tema B Copyright © Grupo 02"
+	echo "Para instalar el TP es necesario contar con Bash 4 o superior instalado."
+	echo "Efectue su instalación e intentelo nuevamente."
+	read
+	finalizarInstalacion "Para instalar el TP es necesario contar con Bash 4 o superior instalado. Proceso de Instalacion Cancelado" "ERROR"
 }
 
 #Realiza el chequeo de que Perl este instalado y sea la version correcta
@@ -68,28 +80,41 @@ function abortarPorNoPerl(){
 function chequeoPerl(){
 	if perl --version > perlversion.auxINST 2>&1; then
 
-		#Guarda en "linea" la linea que contiene la frase "This is perl"
-		linea=`grep '^This is perl .,' < perlversion.auxINST`
-		#Borro la parte que dice "This is perl " xq luego de eso viene escrita la version
-		linea=${linea##"This is perl "}
-		#En version queda el numero de version ya que este es el primer caracter de la linea
-		version=${linea:0:1}
-
+		#Guarda en "linea" la linea que contiene la frase "v." y la version
+		version=`grep 'v[0-9]\.' perlversion.auxINST | sed s/'.*v\([0-9]\).*/\1/'`
+		#El sed reemplaza toda la linea por el numero de version, contigua a "v."
+				
 		#Se pide que la version de Perl sea mayor o igual a la version 5
 		if [ $version -lt 5 ]; then
 			#La version no es la adecuada. Se aborta la instalacion
 			abortarPorNoPerl
 		else
-			./Grabar_L.sh "Instalar_TP" "Informativo" "TP SO7508 Segundo Cuatrimestre 2013. Tema B Copyright © Grupo 02"
+			Grabar_L.sh "Instalar_TP" "Informativo" "TP SO7508 Segundo Cuatrimestre 2013. Tema B Copyright © Grupo 02"
 			vers="Perl Version: "$version
-			./Grabar_L.sh "Instalar_TP" "Informativo" "$vers"
+			Grabar_L.sh "Instalar_TP" "Informativo" "$vers"
 		fi
 
 	else
 		#Perl no esta instalado
 		abortarPorNoPerl	
 	fi
+}
 
+#Realiza el chequeo de que Bash este instalado y sea la version correcta
+function chequeoBash(){
+	bash_v=`echo "$BASH_VERSION" | sed -n "s/^\([0-9]\).*/\1/p"`
+	if [ -z $bash_v ]; then
+		#Bash no esta instalado
+		abortarPorNoBash	
+	else
+		if [ $bash_v -lt 4 ]; then
+			#La version no es la adecuada. Se aborta la instalacion
+			abortarPorNoBash
+		else
+			vers="Bash Version: "$bash_v
+			Grabar_L.sh "Instalar_TP" "Informativo" "$vers"
+		fi
+	fi
 }
 
 #Se setean los parametros con los valores default
@@ -105,68 +130,94 @@ function setearParametrosDefault(){
 	DATASIZE=100
 	LOGEXT="log"
 	LOGSIZE=400
-	exportarVariables
+}
+
+function setearVariablesFinal(){
+	BINDIR="$PWD/"$BINDIR
+	MAEDIR="$PWD/"$MAEDIR
+	ARRIDIR="$PWD/"$ARRIDIR
+	ACEPDIR="$PWD/"$ACEPDIR
+	RECHDIR="$PWD/"$RECHDIR
+	REPODIR="$PWD/"$REPODIR
+	PROCDIR="$PWD/"$PROCDIR
+	LOGDIR="$PWD/"$LOGDIR
 }
 
 #primer parametro: variable a tratar
 #segundo parametro: valor default de la variable
 #tercer parametro: mensaje
+#primer parametro: variable a tratar
+#segundo parametro: valor default de la variable
+#tercer parametro: mensaje
 function definirParametro(){
-	echo $2 "("$GRUPO"/"$1"):"
+	echo $2 "("$1"):"
 	read lectura
 	RESULTADO=$1
+
 	if [ ! "$lectura" == "" ]; then
 		RESULTADO=$lectura
-		./Grabar_L.sh "Instalar_TP" "Informativo" "Usuario ha redefinido: "$3". Con el valor: "$RESULTADO
+		Grabar_L.sh "Instalar_TP" "Informativo" "Usuario ha redefinido: "$3". Con el valor: "$RESULTADO
+	fi
+}
+
+function definirParametroBINDIR(){
+	valido="NO"
+	RESULTADO=$1
+	while [ $valido == "NO" ]; do
+		echo $2 "("$1"):"
+		read lectura
+		valido=`echo $lectura | grep "\/"`
+		if [ -z $valido ]; then
+			valido="SI"
+		else
+			echo "El directorio de archivos binarios no puede estar definido como mas de una SubCarpeta."
+			valido="NO"
+		fi
+	done
+	if [ ! "$lectura" == "" ]; then
+		RESULTADO=$lectura
+		Grabar_L.sh "Instalar_TP" "Informativo" "Usuario ha redefinido: "$3". Con el valor: "$RESULTADO
 	fi
 }
 
 function definirBINDIR(){
-	definirParametro "$BINDIR" "Defina el directorio de instalación de los ejecutables" "BINDIR"
+	definirParametroBINDIR "$BINDIR" "Defina el directorio de instalación de los ejecutables" "BINDIR"
 	BINDIR=$RESULTADO
-	export BINDIR
 }
 
 function definirMAEDIR(){
 	definirParametro "$MAEDIR" "Defina el directorio de instalación de los archivos maestros" "MAEDIR"
 	MAEDIR=$RESULTADO
-	export MAEDIR
 }
 
 function definirARRIDIR(){
 	definirParametro "$ARRIDIR" "Defina el directorio de arribo de archivos externos" "ARRIDIR"
 	ARRIDIR=$RESULTADO
-	export ARRIDIR
 }
 
 function definirACEPDIR(){
 	definirParametro "$ACEPDIR" "Defina el directorio de grabación de los archivos externos aceptados" "ACEPDIR"
 	ACEPDIR=$RESULTADO
-	export ACEPDIR
 }
 
 function definirRECHDIR(){
 	definirParametro "$RECHDIR" "Defina el directorio de grabación de los archivos externos rechazados" "RECHDIR"
 	RECHDIR=$RESULTADO
-	export RECHDIR
 }
 
 function definirREPODIR(){
 	definirParametro "$REPODIR" "Defina el directorio de los listados de salida" "REPODIR"
 	REPODIR=$RESULTADO
-	export REPODIR
 }
 
 function definirPROCDIR(){
 	definirParametro "$PROCDIR" "Defina el directorio de grabación de los archivos procesados" "PROCDIR"
 	PROCDIR=$RESULTADO
-	export PROCDIR
 }
 
 function definirLOGDIR(){
 	definirParametro "$LOGDIR" "Defina el directorio de logs" "LOGDIR"
 	LOGDIR=$RESULTADO
-	export LOGDIR
 }
 
 #primer parametro: numero/cadena a verifica
@@ -183,7 +234,7 @@ function esNumeroPositivo(){
 		fi
 	fi
 	if [ "$ES_POSITIVO" == "NO" ]; then
-		./Grabar_L.sh "Instalar_TP" "Informativo" "El dato ingresado no es valido"
+		Grabar_L.sh "Instalar_TP" "Informativo" "El dato ingresado no es valido"
 		echo "Debe ingresar un numero positivo."
 	fi
 }
@@ -197,12 +248,12 @@ function definirParametroNumerico(){
 
 	ES_POSITIVO="NO"
 	
-	while [ "${ES_POSITIVO^^}" == "NO" ]; do
+	while [ "${ES_POSITIVO}" == "NO" ]; do
 		read lectura
 		RESULTADO=$1
 		if [ ! "$lectura" == "" ]; then
 			RESULTADO=$lectura
-			./Grabar_L.sh "Instalar_TP" "Informativo" "Usuario ha redefinido: "$3". Con el valor: "$RESULTADO
+			Grabar_L.sh "Instalar_TP" "Informativo" "Usuario ha redefinido: "$3". Con el valor: "$RESULTADO
 			esNumeroPositivo $lectura
 		else
 			#El dato default es un dato valido
@@ -214,14 +265,12 @@ function definirParametroNumerico(){
 function definirDatasize(){
 	definirParametroNumerico "$DATASIZE" "Indique el espacio mínimo libre para el arribo de archivos externos, en Mbytes" "DATASIZE" "Mb"
 	DATASIZE=$RESULTADO
-	export DATASIZE
 }
 
 function definirLOGSIZE(){
-	mensaje="Defina el tamaño máximo para los archivos "$LOGEXT", en Kbytes"
+	mensaje="Defina el tamaño máximo para los archivos "$LOG_EXT", en Kbytes"
 	definirParametroNumerico "$LOGSIZE" "$mensaje" "LOGSIZE" "Kb"
 	LOGSIZE=$RESULTADO
-	export LOGSIZE
 }
 
 function definirExtensionArchivos(){
@@ -229,22 +278,21 @@ function definirExtensionArchivos(){
 	read lectura
 	if [ ! "$lectura" == "" ]; then
 		LOGEXT=$lectura
-		export LOGEXT
 	fi
 }
 
 #Chequea el espacio disponible en la direccion ARRIDIR
 #Si es suficiente continua, sino consulta al usuario
 function chequearEspacioARRIDIR(){
-	TAM=`./ObtenerEspacio.sh $ARRIDIR`
+	TAM=`ObtenerEspacio.sh $ARRIDIR`
 	#Si TAM es menor que DATASIZE comp es 1
 	comp=`echo "$DATASIZE > $TAM" | bc`
 	HAY_ESPACIO="SI"
 	if [ $comp -eq 1 ];then
-		./Grabar_L.sh "Instalar_TP" "Informativo" "Insuficiente espacio en disco"
-		./Grabar_L.sh "Instalar_TP" "Informativo" "Espacio disponible: "$TAM" Mb"
-		./Grabar_L.sh "Instalar_TP" "Informativo" "Espacio requerido: "$DATASIZE" Mb"
-		./Grabar_L.sh "Instalar_TP" "Informativo" "Cancele la instalación e inténtelo mas tarde o vuelva a intentarlo con otro valor"
+		Grabar_L.sh "Instalar_TP" "Informativo" "Insuficiente espacio en disco"
+		Grabar_L.sh "Instalar_TP" "Informativo" "Espacio disponible: "$TAM" Mb"
+		Grabar_L.sh "Instalar_TP" "Informativo" "Espacio requerido: "$DATASIZE" Mb"
+		Grabar_L.sh "Instalar_TP" "Informativo" "Cancele la instalación e inténtelo mas tarde o vuelva a intentarlo con otro valor"
 		echo "Espacio Insuficiente"
 		echo "Cancele la instalación e inténtelo mas tarde o vuelva a intentarlo con otro valor"
 		HAY_ESPACIO="NO"
@@ -259,17 +307,17 @@ function consultarUsuarioEspacio(){
 
 	if [ "$HAY_ESPACIO" == "NO" ]; then
 		entradaSiNo "Desea redefinir el valor de Espacio minimo?"
-		if [ "${RTA^^}" == "SI" ]; then
-			./Grabar_L.sh "Instalar_TP" "Informativo" "Usuario ha decidido redefinir el valor de Espacio minimo."
+		if [ "${RTA}" == "SI" ]; then
+			Grabar_L.sh "Instalar_TP" "Informativo" "Usuario ha decidido redefinir el valor de Espacio minimo."
 			redefinirDatasize
 		else
-			./Grabar_L.sh "Instalar_TP" "Informativo" "El Usuario ha decidido no redefinir el Espacio mínimo"
+			Grabar_L.sh "Instalar_TP" "Informativo" "El Usuario ha decidido no redefinir el Espacio mínimo"
 			entradaSiNo "Desea abortar la instalacion?"
-			if [ "${RTA^^}" == "SI" ]; then
+			if [ "${RTA}" == "SI" ]; then
 				finalizarInstalacion "El usuario ha abortado la instalacion." "ERROR"
 			else
 				msj="Se debe liberar espacio en el disco. Se solicita nueva verificacion de espacio."
-				./Grabar_L.sh "Instalar_TP" "Informativo" "$msj"
+				Grabar_L.sh "Instalar_TP" "Informativo" "$msj"
 				continuaEspacio
 			fi
 		fi
@@ -312,22 +360,22 @@ function definirParametros(){
 #Pregunta al usuario si acepta las condiciones de instalacion
 #Si no las acepta Aborta la instalacion
 function preguntarCondicionesDeInstalacion(){
-	./Grabar_L.sh "Instalar_TP" "Informativo" "Inicio de Instalación completa"
+	Grabar_L.sh "Instalar_TP" "Informativo" "Inicio de Instalación completa"
 	echo "TP SO7508 Segundo Cuatrimestre 2013. Tema B Copyright © Grupo 02"
 	echo "A T E N C I O N: Al instalar TP SO7508 Segundo Cuatrimestre 2013 Ud. expresa aceptar los términos y Condiciones del 'ACUERDO DE LICENCIA DESOFTWARE' incluido en este paquete."	
 	entradaSiNo "Acepta las condiciones?"
 	
-	if [ "${RTA^^}" == "NO" ]; then
+	if [ "${RTA}" == "NO" ]; then
 		finalizarInstalacion "El Usuario NO Aceptó los terminos y Condiciones de Instalacion. INSTALACION ABORTADA" "ERROR"
 	fi
 }
 
 #Pregunta al usuario si esta seguro de querer instalar el programa
 function confirmarInstalacion(){
-	./Grabar_L.sh "Instalar_TP" "Informativo" "Iniciando instalacion. Se pide confirmacion al usuario."
+	Grabar_L.sh "Instalar_TP" "Informativo" "Iniciando instalacion. Se pide confirmacion al usuario."
 	entradaSiNo "Iniciando Instalacion. Esta ud. seguro que desea continuar?"
 
-	if [ "${RTA^^}" == "NO" ]; then
+	if [ "${RTA}" == "NO" ]; then
 		finalizarInstalacion "Instalacion rechazada por el usuario" "ERROR"
 	fi	
 }
@@ -337,13 +385,13 @@ function confirmarInstalacion(){
 #redefinirlos
 function definirParametrosPorUsuario(){
 	RTA="NO"
-	while [ "${RTA^^}" == "NO" ]; do
+	while [ "${RTA}" == "NO" ]; do
 		definirParametros
 		exportarVariables
-		./imprimirSusRespuestas.sh 0 "LISTA" "Instalar_TP"
+		imprimirSusRespuestas.sh 0 "LISTA" "Instalar_TP"
 		entradaSiNo "Es correcta la configuracion?"
-		if [ "${RTA^^}" == "NO" ]; then
-			./Grabar_L.sh "Instalar_TP" "Informativo" "Configuracion rechazada por el usuario"
+		if [ "${RTA}" == "NO" ]; then
+			Grabar_L.sh "Instalar_TP" "Informativo" "Configuracion rechazada por el usuario"
 			clear
 		fi
 	done
@@ -365,15 +413,12 @@ function crearDirectorios(){
 	echo "Creacion de Directorios Finalizada!"
 }
 
-#???
 function moverArchivos(){
-# 	1 : origen				(ej: /origen/archivo.txt)
-#	2 : destino				(ej: /destino)
-#	3 : comando que invoca	(optativo)
-	#./Mover_B.sh 
-	echo "Revisar Implementar moverArchivos"
-	cp *.sh $BINDIR
-	cp MAESTROS/*.mae $MAEDIR
+	chmod a+x ARCHS/BINARIOS/*.sh
+	cp ARCHS/BINARIOS/*.sh $BINDIR
+	cp ARCHS/BINARIOS/*.pl $BINDIR
+	cp ARCHS/MAESTROS/*.mae $MAEDIR
+	cp ARCHS/MAESTROS/*.dis $PROCDIR
 }
 
 #A partir del archivo de configuraciones, obtiene el valor del
@@ -382,10 +427,6 @@ function moverArchivos(){
 function obtenerValorExistente(){
 	re="^$1"
 	linea_original=`grep "$re" < $2`
-	#ind=`expr index "$linea_original" '='`
-	#linea_aux=${linea_original:$ind}
-	#ind2=`expr index "$linea_aux" '='`
-	#VALOR_EN_ARCH=${linea_aux:0:$ind2-1}
 	VALOR_EN_ARCH=`echo "$linea_original" | cut -d "=" -f 2`
 }
 
@@ -399,11 +440,11 @@ function escribirRegistro(){
 function actualizarConfiguracionCompleto(){
 	
 	echo "Actualizando la configuración del sistema"
-	./Grabar_L.sh "Instalar_TP" "Informativo" "Se almacenan todos los registros en el archivo de configuración."
+	Grabar_L.sh "Instalar_TP" "Informativo" "Se almacenan todos los registros en el archivo de configuración."
 	
 	> $ARCHCONF #Crea el archivo vacio
 
-	escribirRegistro "GRUPO" $GRUPO
+	escribirRegistro "GRUPO" "$GRUPO"
 	escribirRegistro "CONFDIR" $CONFDIR
 	escribirRegistro "BINDIR" $BINDIR
 	escribirRegistro "MAEDIR" $MAEDIR
@@ -424,6 +465,7 @@ function instalar(){
 	preguntarCondicionesDeInstalacion
 	
 	chequeoPerl
+	chequeoBash
 	
 	setearParametrosDefault
 	
@@ -431,13 +473,15 @@ function instalar(){
 
 	confirmarInstalacion
 	
+	setearVariablesFinal
+	
 	crearDirectorios
 	
 	moverArchivos
 	
 	actualizarConfiguracionCompleto
 	
-	finalizarInstalacion "Instalacion: CONCLUIDA" "OK"
+	finalizarInstalacion "Instalacion: CONCLUIDA" "Informativo"
 }
 
 function obtenerValoresExistentes(){
@@ -465,32 +509,33 @@ function obtenerValoresExistentes(){
 	DATASIZE=$VALOR_EN_ARCH
 }
 
-function exportarVariables(){
-	export BINDIR
-	export MAEDIR
-	export ARRIDIR
-	export ACEPDIR
-	export RECHDIR
-	export REPODIR
-	export PROCDIR
-	export LOGDIR
-	export LOGEXT
-	export LOGSIZE
-	export DATASIZE
-	
-}
-
 function verificarEspacioEnDisco() {
-	TAM=`./ObtenerEspacio.sh $ARRIDIR`
+	TAM=`ObtenerEspacio.sh $ARRIDIR`
 	comp=`echo "$DATASIZE > $TAM" | bc`
 	if [ $comp -eq 1 ];then
-		./Grabar_L.sh "Instalar_TP" "Informativo" "Insuficiente espacio en disco"
-		./Grabar_L.sh "Instalar_TP" "Informativo" "Espacio disponible: "$TAM" Mb"
-		./Grabar_L.sh "Instalar_TP" "Informativo" "Espacio requisitado: "$DATASIZE" Mb"
+		Grabar_L.sh "Instalar_TP" "Informativo" "Insuficiente espacio en disco"
+		Grabar_L.sh "Instalar_TP" "Informativo" "Espacio disponible: "$TAM" Mb"
+		Grabar_L.sh "Instalar_TP" "Informativo" "Espacio requisitado: "$DATASIZE" Mb"
 		echo "Espacio Insuficiente"
 		msj="Espacio insuficiente para datos. Instalacion Abortada"
 		finalizarInstalacion "$msj" "ERROR"
 	fi
+}
+
+function exportarVariables(){
+	export GRUPO
+	export CONFDIR
+	export ARRIDIR
+	export ACEPDIR
+	export RECHDIR
+	export PROCDIR
+	export BINDIR
+	export MAEDIR
+	export REPODIR
+	export LOGDIR
+	export LOGEXT
+	export LOGSIZE
+	export DATASIZE
 }
 
 function imprimirFaltantes(){
@@ -501,15 +546,16 @@ function imprimirFaltantes(){
 function completarInstalacion(){
 	entradaSiNo "Desea Completar la Instalación?"
 	
-	if [ "${RTA^^}" == "NO" ]; then
+	if [ "${RTA}" == "NO" ]; then
 		rm $CONFTEMP
 		finalizarInstalacion "El Usuario decidió no completar la instalación" "ERROR"
 	fi
 	
 	chequeoPerl
+	chequeoBash
 	
-	./imprimirSusRespuestas.sh 0 "LISTA" "Instalar_TP"
-	
+	exportarVariables
+	imprimirSusRespuestas.sh 0 "LISTA" "Instalar_TP"	
 	confirmarInstalacion
 	
 	crearDirectorios
@@ -519,11 +565,12 @@ function completarInstalacion(){
 	#elimina la configuracion anterior
 	mv $CONFTEMP $ARCHCONF
 	
-	finalizarInstalacion "Instalacion: CONCLUIDA" "OK"
+	finalizarInstalacion "Instalacion: CONCLUIDA" "Informativo"
 }
 
 function informaryCompletarInstalacion(){
-	./imprimirSusRespuestas.sh 1 "INCOMPLETA" "Instalar_TP"
+	exportarVariables
+	imprimirSusRespuestas.sh 1 "INCOMPLETA" "Instalar_TP"
 	
 	CONFTEMP=$ARCHCONF".auxINST"
 	obtenerValoresExistentes "$CONFTEMP"
@@ -535,31 +582,32 @@ function informaryCompletarInstalacion(){
 	completarInstalacion
 }
 
-
-#otorga permisos de ejecucion
-chmod a+x *.sh
+#otorga permisos de ejecucion  de los scripts que utiliza
+chmod a+x $PWD"/ARCHS/BINARIOS/"*.sh
 
 #setea la variable de configuracion
-CONFDIR=grupo02/conf/
-export CONFDIR
-GRUPO=grupo02
+export CONFDIR="$PWD"/conf
+
 DIR_ACTUAL=$PWD
+GRUPO=grupo02
 
-crearDirectorio $GRUPO"/conf/"
+export PATH=$PATH:$PWD"/ARCHS/BINARIOS/"
 
-./Grabar_L.sh "Instalar_TP" "Informativo" "Inicio de Instalación"
-./Grabar_L.sh "Instalar_TP" "Informativo" "Log del Comando Instalar_TP: "$CONFDIR"Instalar_TP.log"
-./Grabar_L.sh "Instalar_TP" "Informativo" "Directorio de Configuración: "$CONFDIR
+crearDirectorio "$CONFDIR"
 
-ARCHCONF=$CONFDIR"Instalar_TP.conf"
+Grabar_L.sh "Instalar_TP" "Informativo" "Inicio de Instalación"
+Grabar_L.sh "Instalar_TP" "Informativo" "Log del Comando Instalar_TP: "$CONFDIR"Instalar_TP.log"
+Grabar_L.sh "Instalar_TP" "Informativo" "Directorio de Configuración: "$CONFDIR
+
+ARCHCONF=$CONFDIR"/Instalar_TP.conf"
 export ARCHCONF
 
 if [ -f $ARCHCONF ]; then
 	obtenerValoresExistentes "$ARCHCONF"
-	exportarVariables
 fi
 
-./Verificar_Instalacion.sh
+exportarVariables
+Verificar_Instalacion.sh "Instalar_TP"
 
 estado=$?
 # no esta instalado
@@ -573,6 +621,7 @@ if [ $estado -eq 1 ]; then
 fi
 
 #instalacion completa
-./imprimirSusRespuestas.sh 1 "COMPLETA" "Instalar_TP"
+exportarVariables
+imprimirSusRespuestas.sh 1 "COMPLETA" "Instalar_TP"
 read basura
-finalizarInstalacion "Proceso de Instalación Cancelado" "OK"
+finalizarInstalacion "Proceso de Instalación Cancelado" "Informativo"
